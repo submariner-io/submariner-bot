@@ -1,0 +1,2 @@
+# github.com/go-playground/webhooks v5.13.0+incompatible
+github.com/go-playground/webhooks/github
