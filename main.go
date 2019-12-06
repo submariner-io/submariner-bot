@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -15,7 +16,9 @@ const (
 )
 
 func main() {
-	git.Run()
+	git, err := git.New("subm", "ssh://git@github.com/submariner-io/submariner.git")
+
+	fmt.Printf("%v , %s", git, err)
 	os.Exit(0)
 	hook, _ := github.New(github.Options.Secret("MyGitHubSuperSecretSecrect...?"))
 
