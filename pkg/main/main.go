@@ -13,6 +13,7 @@ import (
 const (
 	path = "/webhooks"
 )
+const listenAddr = ":3000"
 
 func main() {
 
@@ -40,5 +41,6 @@ func main() {
 			w.Write([]byte("An error happened: " + err.Error()))
 		}
 	})
-	http.ListenAndServe(":3000", nil)
+	klog.Infof("Listening for webhook requests on %s", listenAddr)
+	http.ListenAndServe(listenAddr, nil)
 }

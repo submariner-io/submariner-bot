@@ -4,7 +4,7 @@ ADD . /build/
 WORKDIR /build
 ENV GO111MODULE on
 ENV GOFLAGS -mod=vendor
-RUN go build -o main .
+RUN go build -o main pkg/main/main.go
 
 FROM alpine
 RUN adduser -S -D -H -h /app appuser
