@@ -19,7 +19,7 @@ type Git struct {
 	Repo *gogit.Repository
 	Name string
 	URL  string
-	auth transport.AuthMethod
+	Auth transport.AuthMethod
 }
 
 func New(name, url string) (*Git, error) {
@@ -29,7 +29,7 @@ func New(name, url string) (*Git, error) {
 	if err != nil {
 		return nil, err
 	}
-	dirName := path.Join("/tmp", name)
+	dirName := path.Join("/tmp", "git", name)
 
 	auth := &ssh2.PublicKeys{User: "git", Signer: signer}
 	auth.HostKeyCallback = ssh.InsecureIgnoreHostKey()
@@ -47,7 +47,7 @@ func New(name, url string) (*Git, error) {
 		return nil, err
 	}
 
-	git := &Git{Repo: repo, URL: url, Name: name, auth: auth}
+	git := &Git{Repo: repo, URL: url, Name: name, Auth: auth}
 
 	err = git.EnsureRemote("origin", url)
 
@@ -64,7 +64,7 @@ func (git *Git) EnsureRemote(name, url string) error {
 }
 
 func (git *Git) FetchRemote(name string) error {
-	err := git.Repo.Fetch(&gogit.FetchOptions{RemoteName: name, Auth: git.auth})
+	err := git.Repo.Fetch(&gogit.FetchOptions{RemoteName: name, Auth: git.Auth})
 	if err == nil || err.Error() == "already up-to-date" {
 		klog.Infof("Remote %s fetched", name)
 		return nil
