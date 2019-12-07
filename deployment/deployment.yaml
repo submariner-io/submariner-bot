@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pr-brancher-deployment
+  labels:
+    app: pr-brancher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pr-brancher
+  template:
+    metadata:
+      labels:
+        app: pr-brancher
+    spec:
+      containers:
+        - name: pr-brancher-webhook
+          image: quay.io/mangelajo/pr-brancher-webhook:dev
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
