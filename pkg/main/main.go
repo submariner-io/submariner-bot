@@ -41,6 +41,12 @@ func main() {
 			w.Write([]byte("An error happened: " + err.Error()))
 		}
 	})
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		w.Write([]byte(":-)"))
+	})
+
 	klog.Infof("Listening for webhook requests on %s", listenAddr)
 	http.ListenAndServe(listenAddr, nil)
 }
