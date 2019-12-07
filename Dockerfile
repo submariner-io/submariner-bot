@@ -10,6 +10,8 @@ FROM alpine
 RUN adduser -S -D -H -h /app appuser
 USER appuser
 COPY --from=builder /build/main /app/
+ENV SSH_KNOWN_HOSTS /dev/null
+
 WORKDIR /app
 CMD ["./main"]
 EXPOSE 3000/tcp
