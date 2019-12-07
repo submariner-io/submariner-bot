@@ -46,7 +46,7 @@ func getWebhookSecretFromK8sSecret() (string, error) {
 		klog.Warningf("secret %s does not contain file %s", secretName, webhookSecretEntry)
 		pwd, err := createWebhookSecretInK8sSecret(secret)
 		if err == nil {
-			klog.Warning("Webhook password stored successfully in secret %s", secretName)
+			klog.Warningf("Webhook password stored successfully in secret %s", secretName)
 			return pwd, nil
 		} else {
 			klog.Fatalf("An error happened while trying to store webhook password in secret %s", secretName)

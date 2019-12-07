@@ -38,7 +38,7 @@ func getK8sSecret() (*v1meta.Secret, error) {
 
 	secret, err := clientSet.CoreV1().Secrets(namespace).Get(secretName, v1.GetOptions{})
 	if err != nil {
-		klog.Error("Error looking up for %s secret in namespace %s : %s", secretName, namespace, err)
+		klog.Errorf("Error looking up for %s secret in namespace %s : %s", secretName, namespace, err)
 		return nil, err
 	}
 
