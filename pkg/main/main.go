@@ -43,8 +43,13 @@ func main() {
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-		w.Write([]byte(":-)"))
+		if r.Method == "GET" {
+			w.WriteHeader(200)
+			w.Write([]byte(":-)"))
+		} else {
+			w.WriteHeader(404)
+			w.Write([]byte("Nothing here..."))
+		}
 	})
 
 	klog.Infof("Listening for webhook requests on %s", listenAddr)
