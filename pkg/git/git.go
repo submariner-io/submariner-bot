@@ -34,8 +34,7 @@ func New(name, url string) (*Git, error) {
 	auth := &ssh2.PublicKeys{User: "git", Signer: signer}
 	auth.HostKeyCallback = ssh.InsecureIgnoreHostKey()
 
-	repo, err := gogit.PlainClone(dirName, false,
-		&gogit.CloneOptions{Auth: auth, URL: url})
+	repo, err := gogit.PlainClone(dirName, false, &gogit.CloneOptions{Auth: auth, URL: url})
 	if err == nil {
 		klog.Infof("Repo %s cloned to %s from %s", name, dirName, url)
 	} else if err != nil && err.Error() == "repository already exists" {

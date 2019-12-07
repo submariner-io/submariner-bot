@@ -57,6 +57,8 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/sergi/go-diff v1.0.0
 github.com/sergi/go-diff/diffmatchpatch
+# github.com/sethvargo/go-password v0.1.3
+github.com/sethvargo/go-password/password
 # github.com/src-d/gcfg v1.4.0
 github.com/src-d/gcfg
 github.com/src-d/gcfg/scanner
@@ -130,6 +132,7 @@ gopkg.in/src-d/go-billy.v4/helper/polyfill
 # gopkg.in/src-d/go-git.v4 v4.13.1 => github.com/src-d/go-git v0.0.0-20190801152248-0d1a009cbb60
 gopkg.in/src-d/go-git.v4
 gopkg.in/src-d/go-git.v4/config
+gopkg.in/src-d/go-git.v4/plumbing/transport
 gopkg.in/src-d/go-git.v4/plumbing/transport/ssh
 gopkg.in/src-d/go-git.v4/internal/revision
 gopkg.in/src-d/go-git.v4/plumbing
@@ -144,7 +147,6 @@ gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/capability
 gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband
 gopkg.in/src-d/go-git.v4/plumbing/revlist
 gopkg.in/src-d/go-git.v4/plumbing/storer
-gopkg.in/src-d/go-git.v4/plumbing/transport
 gopkg.in/src-d/go-git.v4/plumbing/transport/client
 gopkg.in/src-d/go-git.v4/storage
 gopkg.in/src-d/go-git.v4/storage/filesystem
@@ -174,6 +176,7 @@ gopkg.in/warnings.v0
 # gopkg.in/yaml.v2 v2.2.1
 gopkg.in/yaml.v2
 # k8s.io/api v0.0.0-20190620084959-7cf5895f2711
+k8s.io/api/core/v1
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apps/v1
 k8s.io/api/autoscaling/v1
@@ -192,7 +195,6 @@ k8s.io/api/batch/v2alpha1
 k8s.io/api/certificates/v1beta1
 k8s.io/api/coordination/v1
 k8s.io/api/coordination/v1beta1
-k8s.io/api/core/v1
 k8s.io/api/policy/v1beta1
 k8s.io/api/events/v1beta1
 k8s.io/api/extensions/v1beta1
@@ -213,26 +215,26 @@ k8s.io/api/storage/v1beta1
 # k8s.io/apimachinery v0.0.0-20190612205821-1799e75a0719
 k8s.io/apimachinery/pkg/apis/meta/v1
 k8s.io/apimachinery/pkg/api/resource
+k8s.io/apimachinery/pkg/runtime
+k8s.io/apimachinery/pkg/runtime/schema
+k8s.io/apimachinery/pkg/types
+k8s.io/apimachinery/pkg/util/intstr
 k8s.io/apimachinery/pkg/conversion
 k8s.io/apimachinery/pkg/fields
 k8s.io/apimachinery/pkg/labels
-k8s.io/apimachinery/pkg/runtime
-k8s.io/apimachinery/pkg/runtime/schema
 k8s.io/apimachinery/pkg/selection
-k8s.io/apimachinery/pkg/types
-k8s.io/apimachinery/pkg/util/intstr
 k8s.io/apimachinery/pkg/util/runtime
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/runtime/serializer/streaming
 k8s.io/apimachinery/pkg/util/net
 k8s.io/apimachinery/pkg/util/sets
-k8s.io/apimachinery/third_party/forked/golang/reflect
-k8s.io/apimachinery/pkg/util/validation
 k8s.io/apimachinery/pkg/conversion/queryparams
 k8s.io/apimachinery/pkg/util/errors
 k8s.io/apimachinery/pkg/util/json
 k8s.io/apimachinery/pkg/util/naming
+k8s.io/apimachinery/third_party/forked/golang/reflect
+k8s.io/apimachinery/pkg/util/validation
 k8s.io/apimachinery/pkg/runtime/serializer
 k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/util/clock

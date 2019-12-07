@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/go-playground/webhooks/github"
+	"k8s.io/klog"
 
-	"github.com/submariner-io/pr-brancher-webhook/pkg/git"
+	"github.com/submariner-io/pr-brancher-webhook/pkg/config"
 	"github.com/submariner-io/pr-brancher-webhook/pkg/handler"
 )
 
@@ -16,11 +15,14 @@ const (
 )
 
 func main() {
-	git, err := git.New("subm", "ssh://git@github.com/submariner-io/submariner.git")
 
-	fmt.Printf("%v , %s", git, err)
-	os.Exit(0)
-	hook, _ := github.New(github.Options.Secret("MyGitHubSuperSecretSecrect...?"))
+	webhookSecret, err := config.GetWebhookSecret()
+	if err != nil {
+		klog.Errorf("Error while trying to retrieve webhook secret: %s", err)
+		klog.Fatalf("The webhook secret can be provided as env var via %s", config.WebhookSecretEnvVar)
+	}
+
+	hook, _ := github.New(github.Options.Secret(webhookSecret))
 
 	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 		payload, err := hook.Parse(r, github.ReleaseEvent, github.PullRequestEvent)
