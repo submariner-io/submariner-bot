@@ -15,26 +15,9 @@ import (
 
 func Handle(pr github.PullRequestPayload) error {
 
-	prNum := pr.Number
-	title := pr.PullRequest.Title
-	user := pr.PullRequest.User.Login
-	headSSHURL := pr.PullRequest.Head.Repo.SSHURL
-	headFullName := pr.PullRequest.Head.Repo.FullName
-	headBranch := pr.PullRequest.Head.Ref
-	baseSSHURL := pr.PullRequest.Base.Repo.SSHURL
-	baseFullName := pr.PullRequest.Base.Repo.FullName
-	baseBranch := pr.PullRequest.Base.Ref
+	baseFullName := logPullRequestInfo(&pr)
 
-	klog.Infof("PR %d %s: %s", prNum, pr.Action, title)
-	klog.Infof("  user: %s", user)
-	klog.Infof("   head      ssh: %s", headSSHURL)
-	klog.Infof("          branch: %s", headBranch)
-	klog.Infof("            name: %s", headFullName)
-	klog.Infof("   base      ssh: %s", baseSSHURL)
-	klog.Infof("          branch: %s", baseBranch)
-	klog.Infof("            name: %s", baseFullName)
-
-	gitRepo, err := git.New(baseFullName, baseSSHURL)
+	gitRepo, err := git.New(baseFullName, pr.PullRequest.Base.Repo.SSHURL)
 	if err != nil {
 		klog.Errorf("creating git object: %s", err)
 		return err
@@ -49,6 +32,27 @@ func Handle(pr github.PullRequestPayload) error {
 	}
 
 	return nil
+}
+
+func logPullRequestInfo(pr *github.PullRequestPayload) string {
+	prNum := pr.Number
+	title := pr.PullRequest.Title
+	user := pr.PullRequest.User.Login
+	headSSHURL := pr.PullRequest.Head.Repo.SSHURL
+	headFullName := pr.PullRequest.Head.Repo.FullName
+	headBranch := pr.PullRequest.Head.Ref
+	baseSSHURL := pr.PullRequest.Base.Repo.SSHURL
+	baseFullName := pr.PullRequest.Base.Repo.FullName
+	baseBranch := pr.PullRequest.Base.Ref
+	klog.Infof("PR %d %s: %s", prNum, pr.Action, title)
+	klog.Infof("  user: %s", user)
+	klog.Infof("   head      ssh: %s", headSSHURL)
+	klog.Infof("          branch: %s", headBranch)
+	klog.Infof("            name: %s", headFullName)
+	klog.Infof("   base      ssh: %s", baseSSHURL)
+	klog.Infof("          branch: %s", baseBranch)
+	klog.Infof("            name: %s", baseFullName)
+	return baseFullName
 }
 
 func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
@@ -66,7 +70,7 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 
 	verFmt := versionedBranchFmt(pr)
 	versionBranch := ""
-	for v := 0; ; v++ {
+	for v := 1; ; v++ {
 		versionBranch = fmt.Sprintf(verFmt, v)
 		if branches[versionBranch] == nil {
 			break // we found an unused version of the branch, let's use it
@@ -102,7 +106,7 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 		RemoteName: "origin",
 		Auth:       gitRepo.Auth,
 		RefSpecs: []config.RefSpec{
-			config.RefSpec(fmt.Sprintf("+refs/heads/%s:refs/remotes/origin/%s", versionBranch, versionBranch))},
+			config.RefSpec(fmt.Sprintf("+refs/heads/%s:refs/heads/%s", versionBranch, versionBranch))},
 	}
 	gitRepo.Repo.Push(&pushOptions)
 	if err != nil {
@@ -116,6 +120,6 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 
 func versionedBranchFmt(pr *github.PullRequestPayload) string {
 	return "z_pr/" +
-		pr.PullRequest.Head.Repo.FullName + "/" +
+		pr.PullRequest.Head.User.Login + "/" +
 		pr.PullRequest.Head.Ref + "/%d"
 }
