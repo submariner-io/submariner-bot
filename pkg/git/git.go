@@ -4,10 +4,12 @@ package git
 
 import (
 	"path"
+	"strings"
 
 	"golang.org/x/crypto/ssh"
 	gogit "gopkg.in/src-d/go-git.v4"
 	gogitConfig "gopkg.in/src-d/go-git.v4/config"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 	ssh2 "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 	"k8s.io/klog"
@@ -72,4 +74,28 @@ func (git *Git) FetchRemote(name string) error {
 		klog.Errorf("Issue fetching remote %s : %s", name, err)
 	}
 	return err
+}
+
+func (git *Git) GetBranches(remoteName string) (map[string]*plumbing.Hash, error) {
+	var branches map[string]*plumbing.Hash
+
+	remote, err := git.Repo.Remote(remoteName)
+	if err != nil {
+		return nil, err
+	}
+
+	rfs, err := remote.List(&gogit.ListOptions{Auth: git.Auth})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, rf := range rfs {
+		name, hash := rf.Name().String(), rf.Hash().String()
+		klog.Infof(" ref: %s hash: %s", name, hash)
+		if strings.HasPrefix("refs/heads/", name) {
+			hash := rf.Hash()
+			branches[name[11:]] = &hash
+		}
+	}
+	return branches, nil
 }
