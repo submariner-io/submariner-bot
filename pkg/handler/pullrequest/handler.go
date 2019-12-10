@@ -3,6 +3,7 @@ package pullrequest
 import (
 	"encoding/hex"
 	"fmt"
+	"os"
 
 	"github.com/go-playground/webhooks/github"
 	git2 "gopkg.in/src-d/go-git.v4"
@@ -28,7 +29,8 @@ func Handle(pr github.PullRequestPayload) error {
 		return openOrSync(gitRepo, &pr)
 	case "synchronize":
 		return openOrSync(gitRepo, &pr)
-	case "closed": // WIP
+	case "closed":
+		return closeBranches(gitRepo, &pr)
 	}
 
 	return nil
@@ -68,6 +70,7 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 		return nil
 	}
 
+	klog.Infof("Branches: %v", branches)
 	verFmt := versionedBranchFmt(pr)
 	versionBranch := ""
 	for v := 1; ; v++ {
@@ -115,6 +118,46 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 	}
 
 	klog.Infof("Pushed branch: %s, with options: %v", ref, pushOptions)
+	return err
+}
+
+func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload) error {
+	err := gitRepo.EnsureRemote(pr.PullRequest.User.Login, pr.PullRequest.Head.Repo.SSHURL)
+	if err != nil {
+		klog.Errorf("git remote setup failed: %s", err)
+		return err
+	}
+
+	branches, err := gitRepo.GetBranches("origin")
+	if err != nil {
+		klog.Errorf("Error getting branches for origin repo")
+		return nil
+	}
+
+	refSpecs := []config.RefSpec{}
+
+	verFmt := versionedBranchFmt(pr)
+	versionBranch := ""
+	for v := 1; ; v++ {
+		versionBranch = fmt.Sprintf(verFmt, v)
+		if branches[versionBranch] != nil {
+			refSpecs = append(refSpecs, config.RefSpec(fmt.Sprintf(":refs/heads/%s", versionBranch)))
+			klog.Infof("Deleting branch: %s", versionBranch)
+		} else {
+			break
+		}
+	}
+
+	pushOptions := git2.PushOptions{
+		RemoteName: "origin",
+		Auth:       gitRepo.Auth,
+		RefSpecs:   refSpecs,
+		Progress:   os.Stderr,
+	}
+
+	origin, err := gitRepo.Repo.Remote("origin")
+	origin.Push(&pushOptions)
+
 	return err
 }
 

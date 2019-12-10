@@ -77,7 +77,7 @@ func (git *Git) FetchRemote(name string) error {
 }
 
 func (git *Git) GetBranches(remoteName string) (map[string]*plumbing.Hash, error) {
-	var branches map[string]*plumbing.Hash
+	branches := make(map[string]*plumbing.Hash)
 
 	remote, err := git.Repo.Remote(remoteName)
 	if err != nil {
@@ -89,12 +89,15 @@ func (git *Git) GetBranches(remoteName string) (map[string]*plumbing.Hash, error
 		return nil, err
 	}
 
+	const branchPrefix = "refs/heads/"
+
 	for _, rf := range rfs {
-		name, hash := rf.Name().String(), rf.Hash().String()
-		klog.Infof(" ref: %s hash: %s", name, hash)
-		if strings.HasPrefix("refs/heads/", name) {
+		name := rf.Name().String()
+		if strings.HasPrefix(name, branchPrefix) {
 			hash := rf.Hash()
-			branches[name[11:]] = &hash
+			branchName := name[len(branchPrefix):]
+			branches[branchName] = &hash
+			klog.Infof(" branch: %s hash: %s", branchName, hash.String())
 		}
 	}
 	return branches, nil
