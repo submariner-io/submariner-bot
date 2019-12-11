@@ -3,6 +3,9 @@ package git
 // github.com/src-d/go-git
 
 import (
+	"encoding/hex"
+	"fmt"
+	"os"
 	"path"
 	"strings"
 
@@ -76,7 +79,9 @@ func (git *Git) FetchRemote(name string) error {
 	return err
 }
 
-func (git *Git) GetBranches(remoteName string) (map[string]*plumbing.Hash, error) {
+type Branches map[string]*plumbing.Hash
+
+func (git *Git) GetBranches(remoteName string) (Branches, error) {
 	branches := make(map[string]*plumbing.Hash)
 
 	remote, err := git.Repo.Remote(remoteName)
@@ -101,4 +106,54 @@ func (git *Git) GetBranches(remoteName string) (map[string]*plumbing.Hash, error
 		}
 	}
 	return branches, nil
+}
+
+func (gitRepo *Git) CreateBranch(versionBranch, sha string) error {
+	ref := plumbing.ReferenceName("refs/heads/" + versionBranch)
+	hash, _ := hex.DecodeString(sha)
+	// TODO: I'm sure there's a better way to do this:
+	var refHash plumbing.Hash
+	if len(hash) != len(refHash) {
+		return fmt.Errorf("Lengths don't match for sha hash %d != %d", len(hash), len(refHash))
+
+	} else {
+		for i, bt := range hash {
+			refHash[i] = bt
+		}
+	}
+	hr := plumbing.NewHashReference(ref, refHash)
+	err := gitRepo.Repo.Storer.SetReference(hr)
+	if err != nil {
+		return fmt.Errorf("Error creating branch reference for %s", versionBranch)
+	}
+	return err
+}
+
+func (gitRepo *Git) Push(remote, versionBranch string) error {
+	pushOptions := gogit.PushOptions{
+		RemoteName: remote,
+		Auth:       gitRepo.Auth,
+		RefSpecs: []gogitConfig.RefSpec{
+			gogitConfig.RefSpec(fmt.Sprintf("+refs/heads/%s:refs/heads/%s", versionBranch, versionBranch))},
+	}
+	return gitRepo.Repo.Push(&pushOptions)
+}
+
+func (gitRepo *Git) DeleteRemoteBranches(remote string, branches []string) error {
+	refSpecs := []gogitConfig.RefSpec{}
+
+	for _, branch := range branches {
+		refSpecs = append(refSpecs, gogitConfig.RefSpec(fmt.Sprintf(":refs/heads/%s", branch)))
+	}
+
+	pushOptions := gogit.PushOptions{
+		RemoteName: remote,
+		Auth:       gitRepo.Auth,
+		RefSpecs:   refSpecs,
+		Progress:   os.Stderr,
+	}
+
+	origin, err := gitRepo.Repo.Remote("origin")
+	origin.Push(&pushOptions)
+	return err
 }

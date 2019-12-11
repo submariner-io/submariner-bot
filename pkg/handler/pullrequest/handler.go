@@ -1,14 +1,9 @@
 package pullrequest
 
 import (
-	"encoding/hex"
 	"fmt"
-	"os"
 
 	"github.com/go-playground/webhooks/github"
-	git2 "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/config"
-	"gopkg.in/src-d/go-git.v4/plumbing"
 	"k8s.io/klog"
 
 	"github.com/submariner-io/pr-brancher-webhook/pkg/git"
@@ -30,7 +25,12 @@ func Handle(pr github.PullRequestPayload) error {
 	case "synchronize":
 		return openOrSync(gitRepo, &pr)
 	case "closed":
+		//TODO: if closed and pr.PullRequest.Merged == true, look for existing PR's pointing to the
+		// merged version and change the base to "master" or pr.PullRequest.Base.Ref
 		return closeBranches(gitRepo, &pr)
+	case "reopened":
+		return openOrSync(gitRepo, &pr)
+
 	}
 
 	return nil
@@ -61,7 +61,25 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 		return nil
 	}
 
-	klog.Infof("Branches: %v", branches)
+	versionBranch := getNextVersionBranch(pr, branches)
+
+	err = gitRepo.CreateBranch(versionBranch, pr.PullRequest.Head.Sha)
+	if err != nil {
+		return err
+	}
+
+	klog.Infof("Created branch: %s", versionBranch)
+
+	if err = gitRepo.Push("origin", versionBranch); err != nil {
+		klog.Errorf("Error pushing origin with the new branch")
+		return err
+	}
+
+	klog.Infof("Pushed branch: %s", versionBranch)
+	return err
+}
+
+func getNextVersionBranch(pr *github.PullRequestPayload, branches git.Branches) string {
 	verFmt := versionedBranchFmt(pr)
 	versionBranch := ""
 	for v := 1; ; v++ {
@@ -70,49 +88,11 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 			break // we found an unused version of the branch, let's use it
 		}
 	}
-
-	ref := plumbing.ReferenceName("refs/heads/" + versionBranch)
-	hash, _ := hex.DecodeString(pr.PullRequest.Head.Sha)
-
-	// TODO: I'm sure there's a better way to do this:
-	var refHash plumbing.Hash
-	if len(hash) != len(refHash) {
-		klog.Errorf("Lengths don't match %d != %d", len(hash), len(refHash))
-		return nil
-	} else {
-		for i, bt := range hash {
-			refHash[i] = bt
-		}
-	}
-
-	hr := plumbing.NewHashReference(ref, refHash)
-	err = gitRepo.Repo.Storer.SetReference(hr)
-
-	if err != nil {
-		klog.Errorf("Error creating branch reference for %s", versionBranch)
-		return err
-	}
-
-	klog.Infof("Created branch: %s", ref)
-
-	// https://git-scm.com/book/es/v2/Git-Internals-The-Refspec
-	pushOptions := git2.PushOptions{
-		RemoteName: "origin",
-		Auth:       gitRepo.Auth,
-		RefSpecs: []config.RefSpec{
-			config.RefSpec(fmt.Sprintf("+refs/heads/%s:refs/heads/%s", versionBranch, versionBranch))},
-	}
-	gitRepo.Repo.Push(&pushOptions)
-	if err != nil {
-		klog.Errorf("Error pushing origin with the new branch")
-		return err
-	}
-
-	klog.Infof("Pushed branch: %s, with options: %v", ref, pushOptions)
-	return err
+	return versionBranch
 }
 
 func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload) error {
+
 	err := gitRepo.EnsureRemote(pr.PullRequest.User.Login, pr.PullRequest.Head.Repo.SSHURL)
 	if err != nil {
 		klog.Errorf("git remote setup failed: %s", err)
@@ -125,35 +105,34 @@ func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 		return nil
 	}
 
-	refSpecs := []config.RefSpec{}
+	branchesToDelete := filterBranchesToDelete(pr, branches)
 
-	verFmt := versionedBranchFmt(pr)
-	versionBranch := ""
-	for v := 1; ; v++ {
-		versionBranch = fmt.Sprintf(verFmt, v)
-		if branches[versionBranch] != nil {
-			refSpecs = append(refSpecs, config.RefSpec(fmt.Sprintf(":refs/heads/%s", versionBranch)))
-			klog.Infof("Deleting branch: %s", versionBranch)
-		} else {
-			break
-		}
-	}
-
-	pushOptions := git2.PushOptions{
-		RemoteName: "origin",
-		Auth:       gitRepo.Auth,
-		RefSpecs:   refSpecs,
-		Progress:   os.Stderr,
-	}
-
-	origin, err := gitRepo.Repo.Remote("origin")
-	origin.Push(&pushOptions)
+	gitRepo.DeleteRemoteBranches("origin", branchesToDelete)
 
 	return err
 }
 
+func filterBranchesToDelete(pr *github.PullRequestPayload, branches git.Branches) []string {
+	branchesToDelete := []string{}
+	verFmt := versionedBranchFmt(pr)
+	versionBranch := ""
+	for v := 1; ; v++ {
+		versionBranch = fmt.Sprintf(verFmt, v)
+		if branches[versionBranch] == nil {
+			break
+		}
+		branchesToDelete = append(branchesToDelete, versionBranch)
+		klog.Infof("Deleting branch: %s", versionBranch)
+	}
+	return branchesToDelete
+}
+
 func versionedBranchFmt(pr *github.PullRequestPayload) string {
+	return versionedBranchBase(pr) + "%d"
+}
+
+func versionedBranchBase(pr *github.PullRequestPayload) string {
 	return "z_pr/" +
 		pr.PullRequest.Head.User.Login + "/" +
-		pr.PullRequest.Head.Ref + "/%d"
+		pr.PullRequest.Head.Ref + "/"
 }
