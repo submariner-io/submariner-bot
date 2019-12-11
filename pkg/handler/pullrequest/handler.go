@@ -15,7 +15,7 @@ func Handle(pr github.PullRequestPayload) error {
 
 	logPullRequestInfo(&pr)
 
-	gitRepo, err := git.New(pr.PullRequest.Base.Ref, pr.PullRequest.Base.Repo.SSHURL)
+	gitRepo, err := git.New(pr.PullRequest.Base.Repo.FullName, pr.PullRequest.Base.Repo.SSHURL)
 	if err != nil {
 		klog.Errorf("creating git object: %s", err)
 		return err
