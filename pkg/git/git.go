@@ -109,32 +109,47 @@ func (git *Git) GetBranches(remoteName string) (Branches, error) {
 }
 
 func (gitRepo *Git) CreateBranch(versionBranch, sha string) error {
-	ref := plumbing.ReferenceName("refs/heads/" + versionBranch)
+	return gitRepo.CreateRef("refs/heads/"+versionBranch, sha)
+}
+
+func (gitRepo *Git) CreateRef(refStr, sha string) error {
+	ref := plumbing.ReferenceName(refStr)
+	refHash, err := getHash(sha)
+	if err != nil {
+		return err
+	}
+	hr := plumbing.NewHashReference(ref, refHash)
+	err = gitRepo.Repo.Storer.SetReference(hr)
+	if err != nil {
+		return fmt.Errorf("Error creating reference for %s", refStr)
+	}
+	return err
+}
+
+func getHash(sha string) (plumbing.Hash, error) {
 	hash, _ := hex.DecodeString(sha)
-	// TODO: I'm sure there's a better way to do this:
 	var refHash plumbing.Hash
 	if len(hash) != len(refHash) {
-		return fmt.Errorf("Lengths don't match for sha hash %d != %d", len(hash), len(refHash))
+		return plumbing.Hash{}, fmt.Errorf("Lengths don't match for sha hash %d != %d", len(hash), len(refHash))
 
 	} else {
 		for i, bt := range hash {
 			refHash[i] = bt
 		}
 	}
-	hr := plumbing.NewHashReference(ref, refHash)
-	err := gitRepo.Repo.Storer.SetReference(hr)
-	if err != nil {
-		return fmt.Errorf("Error creating branch reference for %s", versionBranch)
-	}
-	return err
+	return refHash, nil
 }
 
 func (gitRepo *Git) Push(remote, versionBranch string) error {
+	return gitRepo.PushRef(remote, "refs/heads/"+versionBranch)
+}
+
+func (gitRepo *Git) PushRef(remote, ref string) error {
 	pushOptions := gogit.PushOptions{
 		RemoteName: remote,
 		Auth:       gitRepo.Auth,
 		RefSpecs: []gogitConfig.RefSpec{
-			gogitConfig.RefSpec(fmt.Sprintf("+refs/heads/%s:refs/heads/%s", versionBranch, versionBranch))},
+			gogitConfig.RefSpec(fmt.Sprintf("+%s:%s", ref, ref))},
 	}
 	return gitRepo.Repo.Push(&pushOptions)
 }
