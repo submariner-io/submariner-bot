@@ -2,6 +2,8 @@ package pullrequest
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/go-playground/webhooks/github"
 	"k8s.io/klog"
@@ -29,6 +31,7 @@ func Handle(pr github.PullRequestPayload) error {
 		// merged version and change the base to "master" or pr.PullRequest.Base.Ref
 		return closeBranches(gitRepo, &pr)
 	case "reopened":
+		//TODO: when re-opened it would be ideal to recover the previous branches, how?
 		return openOrSync(gitRepo, &pr)
 
 	}
@@ -80,15 +83,16 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 }
 
 func getNextVersionBranch(pr *github.PullRequestPayload, branches git.Branches) string {
-	verFmt := versionedBranchFmt(pr)
-	versionBranch := ""
-	for v := 1; ; v++ {
-		versionBranch = fmt.Sprintf(verFmt, v)
-		if branches[versionBranch] == nil {
-			break // we found an unused version of the branch, let's use it
+	existing := filterVersionBranches(pr, branches)
+
+	num := 0
+	for _, branch := range existing {
+		parts := strings.Split(branch, "/")
+		if numBr, _ := strconv.Atoi(parts[len(parts)-1]); numBr > num {
+			num = numBr
 		}
 	}
-	return versionBranch
+	return fmt.Sprintf(versionedBranchFmt(pr), num+1)
 }
 
 func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload) error {
@@ -105,24 +109,21 @@ func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 		return nil
 	}
 
-	branchesToDelete := filterBranchesToDelete(pr, branches)
+	branchesToDelete := filterVersionBranches(pr, branches)
+	klog.Infof("Deleting branches: %v", branchesToDelete)
 
 	gitRepo.DeleteRemoteBranches("origin", branchesToDelete)
 
 	return err
 }
 
-func filterBranchesToDelete(pr *github.PullRequestPayload, branches git.Branches) []string {
+func filterVersionBranches(pr *github.PullRequestPayload, branches git.Branches) []string {
 	branchesToDelete := []string{}
-	verFmt := versionedBranchFmt(pr)
-	versionBranch := ""
-	for v := 1; ; v++ {
-		versionBranch = fmt.Sprintf(verFmt, v)
-		if branches[versionBranch] == nil {
-			break
+	verBase := versionedBranchBase(pr)
+	for branch, _ := range branches {
+		if strings.HasPrefix(branch, verBase) {
+			branchesToDelete = append(branchesToDelete, branch)
 		}
-		branchesToDelete = append(branchesToDelete, versionBranch)
-		klog.Infof("Deleting branch: %s", versionBranch)
 	}
 	return branchesToDelete
 }
