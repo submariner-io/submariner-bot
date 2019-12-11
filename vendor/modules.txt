@@ -29,6 +29,10 @@ github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+# github.com/google/go-github/v28 v28.1.1
+github.com/google/go-github/v28/github
+# github.com/google/go-querystring v1.0.0
+github.com/google/go-querystring/query
 # github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 github.com/google/gofuzz
 # github.com/googleapis/gnostic v0.0.0-20170729233727-0c5108395e2d
@@ -91,12 +95,12 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/socks
-golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
+golang.org/x/net/context
 # golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
 golang.org/x/oauth2
-golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
+golang.org/x/oauth2/google
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sys v0.0.0-20190726091711-fc99dfbffb4e
@@ -111,12 +115,12 @@ golang.org/x/text/transform
 # golang.org/x/time v0.0.0-20161028155119-f51c12702a4d
 golang.org/x/time/rate
 # google.golang.org/appengine v1.5.0
-google.golang.org/appengine
 google.golang.org/appengine/urlfetch
+google.golang.org/appengine
 google.golang.org/appengine/internal
+google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/internal/app_identity
 google.golang.org/appengine/internal/modules
-google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
@@ -132,10 +136,10 @@ gopkg.in/src-d/go-billy.v4/helper/polyfill
 # gopkg.in/src-d/go-git.v4 v4.13.1 => github.com/src-d/go-git v0.0.0-20190801152248-0d1a009cbb60
 gopkg.in/src-d/go-git.v4
 gopkg.in/src-d/go-git.v4/config
+gopkg.in/src-d/go-git.v4/plumbing
 gopkg.in/src-d/go-git.v4/plumbing/transport
 gopkg.in/src-d/go-git.v4/plumbing/transport/ssh
 gopkg.in/src-d/go-git.v4/internal/revision
-gopkg.in/src-d/go-git.v4/plumbing
 gopkg.in/src-d/go-git.v4/plumbing/cache
 gopkg.in/src-d/go-git.v4/plumbing/filemode
 gopkg.in/src-d/go-git.v4/plumbing/format/gitignore

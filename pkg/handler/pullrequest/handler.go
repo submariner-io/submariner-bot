@@ -6,14 +6,23 @@ import (
 	"strings"
 
 	"github.com/go-playground/webhooks/github"
+	goGithub "github.com/google/go-github/v28/github"
 	"k8s.io/klog"
 
 	"github.com/submariner-io/pr-brancher-webhook/pkg/git"
 )
 
+//NOTE: this has been disabled in code for just in case we think it'd valuable to enable later
+const enableVersionBranches = false
+
 func Handle(pr github.PullRequestPayload) error {
 
 	logPullRequestInfo(&pr)
+	ghClient, err := getGithubClient()
+	if err != nil {
+		klog.Errorf("creating github client: %s", err)
+		return err
+	}
 
 	gitRepo, err := git.New(pr.PullRequest.Base.Repo.FullName, pr.PullRequest.Base.Repo.SSHURL)
 	if err != nil {
@@ -23,16 +32,16 @@ func Handle(pr github.PullRequestPayload) error {
 
 	switch pr.Action {
 	case "opened":
-		return openOrSync(gitRepo, &pr)
+		return openOrSync(gitRepo, &pr, ghClient)
 	case "synchronize":
-		return openOrSync(gitRepo, &pr)
+		return openOrSync(gitRepo, &pr, ghClient)
 	case "closed":
 		//TODO: if closed and pr.PullRequest.Merged == true, look for existing PR's pointing to the
 		// merged version and change the base to "master" or pr.PullRequest.Base.Ref
-		return closeBranches(gitRepo, &pr)
+		return closeBranches(gitRepo, &pr, ghClient)
 	case "reopened":
 		//TODO: when re-opened it would be ideal to recover the previous branches, how?
-		return openOrSync(gitRepo, &pr)
+		return openOrSync(gitRepo, &pr, ghClient)
 
 	}
 
@@ -51,7 +60,10 @@ func logPullRequestInfo(pr *github.PullRequestPayload) {
 	klog.Infof("            name: %s", pr.PullRequest.Base.Ref)
 }
 
-func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
+func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, ghClient *goGithub.Client) error {
+
+	// TODO: ignore base repo == head repo, because that means manual branch handling
+
 	err := gitRepo.EnsureRemote(pr.PullRequest.User.Login, pr.PullRequest.Head.Repo.SSHURL)
 	if err != nil {
 		klog.Errorf("git remote setup failed: %s", err)
@@ -64,32 +76,40 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 		return nil
 	}
 
-	versionBranch := getNextVersionBranch(pr, branches)
+	versionBranch := getVersionBranch(pr, branches)
 
 	err = gitRepo.CreateBranch(versionBranch, pr.PullRequest.Head.Sha)
 	if err != nil {
 		return err
 	}
 
-	// This one we don't delete it later, but it's stored internally in git, and
-	// we can restore it if the PR is re-opened
-	prRef := "refs/pr/" + versionBranch
-	err = gitRepo.CreateRef(prRef, pr.PullRequest.Head.Sha)
+	var infoMsg string
+	if branches[versionBranch] == nil {
+		infoMsg = fmt.Sprintf("Created branch: %s", versionBranch)
+	} else {
+		infoMsg = fmt.Sprintf("Updated branch: %s", versionBranch)
+	}
 
-	klog.Infof("Created branch: %s", versionBranch)
+	klog.Infof(infoMsg)
 
 	if err = gitRepo.Push(git.Origin, versionBranch); err != nil {
-		klog.Errorf("Error pushing origin with the new branch")
+		klog.Errorf("Error pushing origin with the new branch: %s", err)
+		commentOnPR(pr, ghClient, fmt.Sprintf("I had an issue pushing the updated branch: %s", err))
 		return err
 	}
 
-	if err = gitRepo.PushRef(git.Origin, prRef); err != nil {
-		klog.Errorf("Error pushing origin with the new pr ref")
-		return err
-	}
+	commentOnPR(pr, ghClient, infoMsg)
 
-	klog.Infof("Pushed branch: %s , and ref: %s", versionBranch, prRef)
+	klog.Infof("Pushed branch: %s", versionBranch)
 	return err
+}
+
+func getVersionBranch(pr *github.PullRequestPayload, branches git.Branches) string {
+	if enableVersionBranches {
+		return getNextVersionBranch(pr, branches)
+	} else {
+		return versionedBranch(pr)
+	}
 }
 
 func getNextVersionBranch(pr *github.PullRequestPayload, branches git.Branches) string {
@@ -105,7 +125,7 @@ func getNextVersionBranch(pr *github.PullRequestPayload, branches git.Branches) 
 	return fmt.Sprintf(versionedBranchFmt(pr), num+1)
 }
 
-func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload) error {
+func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload, ghClient *goGithub.Client) error {
 
 	err := gitRepo.EnsureRemote(pr.PullRequest.User.Login, pr.PullRequest.Head.Repo.SSHURL)
 	if err != nil {
@@ -122,16 +142,23 @@ func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 	branchesToDelete := filterVersionBranches(pr, branches)
 	klog.Infof("Deleting branches: %v", branchesToDelete)
 
-	gitRepo.DeleteRemoteBranches(git.Origin, branchesToDelete)
+	err = gitRepo.DeleteRemoteBranches(git.Origin, branchesToDelete)
+
+	if err != nil {
+		klog.Error("Something happened removing branches: %s", err)
+	}
+
+	commentOnPR(pr, ghClient, fmt.Sprintf("Closed branches: %s", branchesToDelete))
 
 	return err
 }
 
 func filterVersionBranches(pr *github.PullRequestPayload, branches git.Branches) []string {
 	branchesToDelete := []string{}
-	verBase := versionedBranchBase(pr)
+	verBase := versionedBranch(pr) + "/"
+	verBranch := versionedBranch(pr)
 	for branch, _ := range branches {
-		if strings.HasPrefix(branch, verBase) {
+		if strings.HasPrefix(branch, verBase) || branch == verBranch {
 			branchesToDelete = append(branchesToDelete, branch)
 		}
 	}
@@ -139,11 +166,11 @@ func filterVersionBranches(pr *github.PullRequestPayload, branches git.Branches)
 }
 
 func versionedBranchFmt(pr *github.PullRequestPayload) string {
-	return versionedBranchBase(pr) + "%d"
+	return versionedBranch(pr) + "/%d"
 }
 
-func versionedBranchBase(pr *github.PullRequestPayload) string {
+func versionedBranch(pr *github.PullRequestPayload) string {
 	return "z_pr/" +
 		pr.PullRequest.Head.User.Login + "/" +
-		pr.PullRequest.Head.Ref + "/"
+		pr.PullRequest.Head.Ref
 }
