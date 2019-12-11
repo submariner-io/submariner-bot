@@ -16,9 +16,9 @@ import (
 
 func Handle(pr github.PullRequestPayload) error {
 
-	baseFullName := logPullRequestInfo(&pr)
+	logPullRequestInfo(&pr)
 
-	gitRepo, err := git.New(baseFullName, pr.PullRequest.Base.Repo.SSHURL)
+	gitRepo, err := git.New(pr.PullRequest.Base.Ref, pr.PullRequest.Base.Repo.SSHURL)
 	if err != nil {
 		klog.Errorf("creating git object: %s", err)
 		return err
@@ -36,25 +36,16 @@ func Handle(pr github.PullRequestPayload) error {
 	return nil
 }
 
-func logPullRequestInfo(pr *github.PullRequestPayload) string {
-	prNum := pr.Number
-	title := pr.PullRequest.Title
-	user := pr.PullRequest.User.Login
-	headSSHURL := pr.PullRequest.Head.Repo.SSHURL
-	headFullName := pr.PullRequest.Head.Repo.FullName
-	headBranch := pr.PullRequest.Head.Ref
-	baseSSHURL := pr.PullRequest.Base.Repo.SSHURL
-	baseFullName := pr.PullRequest.Base.Repo.FullName
-	baseBranch := pr.PullRequest.Base.Ref
-	klog.Infof("PR %d %s: %s", prNum, pr.Action, title)
-	klog.Infof("  user: %s", user)
-	klog.Infof("   head      ssh: %s", headSSHURL)
-	klog.Infof("          branch: %s", headBranch)
-	klog.Infof("            name: %s", headFullName)
-	klog.Infof("   base      ssh: %s", baseSSHURL)
-	klog.Infof("          branch: %s", baseBranch)
-	klog.Infof("            name: %s", baseFullName)
-	return baseFullName
+func logPullRequestInfo(pr *github.PullRequestPayload) {
+
+	klog.Infof("PR %d %s: %s", pr.Number, pr.Action, pr.PullRequest.Title)
+	klog.Infof("  user: %s", pr.PullRequest.User.Login)
+	klog.Infof("   head      ssh: %s", pr.PullRequest.Head.Repo.SSHURL)
+	klog.Infof("          branch: %s", pr.PullRequest.Head.Ref)
+	klog.Infof("            name: %s", pr.PullRequest.Head.Repo.FullName)
+	klog.Infof("   base      ssh: %s", pr.PullRequest.Base.Repo.SSHURL)
+	klog.Infof("          branch: %s", pr.PullRequest.Base.Repo.FullName)
+	klog.Infof("            name: %s", pr.PullRequest.Base.Ref)
 }
 
 func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
