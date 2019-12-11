@@ -58,7 +58,7 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 		return err
 	}
 
-	branches, err := gitRepo.GetBranches("origin")
+	branches, err := gitRepo.GetBranches(git.Origin)
 	if err != nil {
 		klog.Errorf("Error getting branches for origin repo")
 		return nil
@@ -71,14 +71,24 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 		return err
 	}
 
+	// This one we don't delete it later, but it's stored internally in git, and
+	// we can restore it if the PR is re-opened
+	prRef := "refs/pr/" + versionBranch
+	err = gitRepo.CreateRef(prRef, pr.PullRequest.Head.Sha)
+
 	klog.Infof("Created branch: %s", versionBranch)
 
-	if err = gitRepo.Push("origin", versionBranch); err != nil {
+	if err = gitRepo.Push(git.Origin, versionBranch); err != nil {
 		klog.Errorf("Error pushing origin with the new branch")
 		return err
 	}
 
-	klog.Infof("Pushed branch: %s", versionBranch)
+	if err = gitRepo.PushRef(git.Origin, prRef); err != nil {
+		klog.Errorf("Error pushing origin with the new pr ref")
+		return err
+	}
+
+	klog.Infof("Pushed branch: %s , and ref: %s", versionBranch, prRef)
 	return err
 }
 
@@ -103,7 +113,7 @@ func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 		return err
 	}
 
-	branches, err := gitRepo.GetBranches("origin")
+	branches, err := gitRepo.GetBranches(git.Origin)
 	if err != nil {
 		klog.Errorf("Error getting branches for origin repo")
 		return nil
@@ -112,7 +122,7 @@ func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload) error {
 	branchesToDelete := filterVersionBranches(pr, branches)
 	klog.Infof("Deleting branches: %v", branchesToDelete)
 
-	gitRepo.DeleteRemoteBranches("origin", branchesToDelete)
+	gitRepo.DeleteRemoteBranches(git.Origin, branchesToDelete)
 
 	return err
 }

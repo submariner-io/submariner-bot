@@ -27,6 +27,8 @@ type Git struct {
 	Auth transport.AuthMethod
 }
 
+const Origin = "origin"
+
 func New(name, url string) (*Git, error) {
 
 	signer, err := config.GetSSHKey()
