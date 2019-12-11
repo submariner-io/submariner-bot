@@ -62,7 +62,14 @@ func logPullRequestInfo(pr *github.PullRequestPayload) {
 
 func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, ghClient *goGithub.Client) error {
 
-	// TODO: ignore base repo == head repo, because that means manual branch handling
+	// If the pull request is coming from a local branch
+	if pr.PullRequest.Base.Repo.FullName == pr.PullRequest.Head.Repo.FullName {
+		if pr.Action == "opened" {
+			commentOnPR(pr, ghClient,
+				"I see This pr is using the local branch workflow, ignoring it on my side, have fun!")
+		}
+		return nil
+	}
 
 	err := gitRepo.EnsureRemote(pr.PullRequest.User.Login, pr.PullRequest.Head.Repo.SSHURL)
 	if err != nil {
