@@ -132,9 +132,9 @@ func getNextVersionBranch(pr *github.PullRequestPayload, branches git.Branches) 
 	return fmt.Sprintf(versionedBranchFmt(pr), num+1)
 }
 
-func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload, ghClient *goGithub.Client) error {
+func closeBranches(gitRepo *git.Git, prPayload *github.PullRequestPayload, ghClient *goGithub.Client) error {
 
-	err := gitRepo.EnsureRemote(pr.PullRequest.User.Login, pr.PullRequest.Head.Repo.SSHURL)
+	err := gitRepo.EnsureRemote(prPayload.PullRequest.User.Login, prPayload.PullRequest.Head.Repo.SSHURL)
 	if err != nil {
 		klog.Errorf("git remote setup failed: %s", err)
 		return err
@@ -146,17 +146,18 @@ func closeBranches(gitRepo *git.Git, pr *github.PullRequestPayload, ghClient *go
 		return nil
 	}
 
-	branchesToDelete := filterVersionBranches(pr, branches)
+	branchesToDelete := filterVersionBranches(prPayload, branches)
 	klog.Infof("Deleting branches: %v", branchesToDelete)
 
-	err = gitRepo.DeleteRemoteBranches(git.Origin, branchesToDelete)
-
-	if err != nil {
-		klog.Error("Something happened removing branches: %s", err)
+	if err = updateDependingPRs(prPayload, ghClient, branchesToDelete); err != nil {
+		return err
 	}
 
-	commentOnPR(pr, ghClient, fmt.Sprintf("Closed branches: %s", branchesToDelete))
-
+	if err = gitRepo.DeleteRemoteBranches(git.Origin, branchesToDelete); err != nil {
+		klog.Errorf("Something happened removing branches: %s", err)
+	} else {
+		commentOnPR(prPayload, ghClient, fmt.Sprintf("Closed branches: %s", branchesToDelete))
+	}
 	return err
 }
 
@@ -177,7 +178,5 @@ func versionedBranchFmt(pr *github.PullRequestPayload) string {
 }
 
 func versionedBranch(pr *github.PullRequestPayload) string {
-	return "z_pr/" +
-		pr.PullRequest.Head.User.Login + "/" +
-		pr.PullRequest.Head.Ref
+	return fmt.Sprintf("z_pr%d/%s/%s", pr.Number, pr.PullRequest.Head.User.Login, pr.PullRequest.Head.Ref)
 }
