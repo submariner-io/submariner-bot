@@ -13,6 +13,12 @@ kubectl apply -n $NS -f deployment/service.yml
 
 ```
 
+## setup with https/letsencrypt
+```bash
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.12.0/cert-manager.yaml
+kubectl apply -f deployment/letsencrypt-prod-issuer.yaml # you may need to edit the class in the yaml based on your ingress
+```
+
 # update image
 ```bash
 kubectl rollout restart deployment/pr-brancher
