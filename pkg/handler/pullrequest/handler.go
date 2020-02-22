@@ -64,7 +64,9 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, ghClient *goGit
 
 	// If the pull request is coming from a local branch
 	if pr.PullRequest.Base.Repo.FullName == pr.PullRequest.Head.Repo.FullName {
-		if pr.Action == "opened" {
+		// We only comment if the PR isn't from a bot, to avoid affecting their behaviour
+		// (e.g. dependabot stops maintaining PRs automatically if they're commented)
+		if pr.Action == "opened" && pr.PullRequest.User.Type != "Bot" {
 			commentOnPR(pr, ghClient,
 				"I see This pr is using the local branch workflow, ignoring it on my side, have fun!")
 		}
