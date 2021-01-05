@@ -5,6 +5,7 @@ ENV GOFLAGS -mod=vendor
 RUN apk add upx
 ADD . /build/
 WORKDIR /build
+RUN go mod vendor
 RUN go build -o main pkg/main/main.go
 RUN time upx main
 
