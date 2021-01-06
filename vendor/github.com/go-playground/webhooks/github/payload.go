@@ -1614,16 +1614,22 @@ type IssueCommentPayload struct {
 			Color       string `json:"color"`
 			Default     bool   `json:"default"`
 		} `json:"labels"`
-		State     string      `json:"state"`
-		Locked    bool        `json:"locked"`
-		Assignee  *Assignee   `json:"assignee"`
-		Assignees []*Assignee `json:"assignees"`
-		Milestone *Milestone  `json:"milestone"`
-		Comments  int64       `json:"comments"`
-		CreatedAt time.Time   `json:"created_at"`
-		UpdatedAt time.Time   `json:"updated_at"`
-		ClosedAt  *time.Time  `json:"closed_at"`
-		Body      string      `json:"body"`
+		State       string      `json:"state"`
+		Locked      bool        `json:"locked"`
+		Assignee    *Assignee   `json:"assignee"`
+		Assignees   []*Assignee `json:"assignees"`
+		Milestone   *Milestone  `json:"milestone"`
+		Comments    int64       `json:"comments"`
+		CreatedAt   time.Time   `json:"created_at"`
+		UpdatedAt   time.Time   `json:"updated_at"`
+		ClosedAt    *time.Time  `json:"closed_at"`
+		PullRequest *struct {
+			URL      string `json:"url"`
+			HTMLURL  string `json:"html_url"`
+			DiffURL  string `json:"diff_url"`
+			PatchURL string `json:"patch_url"`
+		} `json:"pull_request"`
+		Body string `json:"body"`
 	} `json:"issue"`
 	Comment struct {
 		URL      string `json:"url"`
@@ -1656,6 +1662,11 @@ type IssueCommentPayload struct {
 		Body              string    `json:"body"`
 		AuthorAssociation string    `json:"author_association"`
 	} `json:"comment"`
+	Changes *struct {
+		Body *struct {
+			From string `json:"from"`
+		} `json:"body"`
+	} `json:"changes"`
 	Repository struct {
 		ID       int64  `json:"id"`
 		NodeID   string `json:"node_id"`
@@ -1820,6 +1831,14 @@ type IssuesPayload struct {
 		ClosedAt  *time.Time  `json:"closed_at"`
 		Body      string      `json:"body"`
 	} `json:"issue"`
+	Changes *struct {
+		Title *struct {
+			From string `json:"from"`
+		} `json:"title"`
+		Body *struct {
+			From string `json:"from"`
+		} `json:"body"`
+	} `json:"changes"`
 	Repository struct {
 		ID       int64  `json:"id"`
 		NodeID   string `json:"node_id"`
@@ -2980,13 +2999,14 @@ type PingPayload struct {
 type ProjectCardPayload struct {
 	Action      string `json:"action"`
 	ProjectCard struct {
-		URL       string  `json:"url"`
-		ColumnURL string  `json:"column_url"`
-		ColumnID  int64   `json:"column_id"`
-		ID        int64   `json:"id"`
-		NodeID    string  `json:"node_id"`
-		Note      *string `json:"note"`
-		Creator   struct {
+		URL        string  `json:"url"`
+		ProjectURL string  `json:"project_url"`
+		ColumnURL  string  `json:"column_url"`
+		ColumnID   int64   `json:"column_id"`
+		ID         int64   `json:"id"`
+		NodeID     string  `json:"node_id"`
+		Note       *string `json:"note"`
+		Creator    struct {
 			Login             string `json:"login"`
 			ID                int64  `json:"id"`
 			NodeID            string `json:"node_id"`
@@ -3583,6 +3603,7 @@ type PullRequestPayload struct {
 		Assignee           *Assignee   `json:"assignee"`
 		Assignees          []*Assignee `json:"assignees"`
 		Milestone          *Milestone  `json:"milestone"`
+		Draft              bool        `json:"draft"`
 		CommitsURL         string      `json:"commits_url"`
 		ReviewCommentsURL  string      `json:"review_comments_url"`
 		ReviewCommentURL   string      `json:"review_comment_url"`
@@ -4000,6 +4021,14 @@ type PullRequestPayload struct {
 		Type              string `json:"type"`
 		SiteAdmin         bool   `json:"site_admin"`
 	} `json:"sender"`
+	Changes *struct {
+		Title *struct {
+			From string `json:"from"`
+		} `json:"title"`
+		Body *struct {
+			From string `json:"from"`
+		} `json:"body"`
+	} `json:"changes"`
 	Assignee          *Assignee `json:"assignee"`
 	RequestedReviewer *Assignee `json:"requested_reviewer"`
 	RequestedTeam     struct {
