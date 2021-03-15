@@ -95,8 +95,6 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, ghClient *goGit
 	var infoMsg string
 	if branches[versionBranch] == nil {
 		infoMsg = fmt.Sprintf("Created branch: %s", versionBranch)
-	} else {
-		infoMsg = fmt.Sprintf("Updated branch: %s", versionBranch)
 	}
 
 	klog.Infof(infoMsg)
@@ -107,7 +105,9 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, ghClient *goGit
 		return err
 	}
 
-	commentOnPR(pr, ghClient, infoMsg)
+	if infoMsg != "" {
+		commentOnPR(pr, ghClient, infoMsg)
+	}
 
 	klog.Infof("Pushed branch: %s", versionBranch)
 	return err
