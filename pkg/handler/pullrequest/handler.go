@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/go-playground/webhooks/github"
-	goGithub "github.com/google/go-github/v28/github"
 	"k8s.io/klog"
 
+	"github.com/submariner-io/pr-brancher-webhook/pkg/ghclient"
 	"github.com/submariner-io/pr-brancher-webhook/pkg/git"
 )
 
@@ -18,7 +18,7 @@ const enableVersionBranches = false
 func Handle(pr github.PullRequestPayload) error {
 
 	logPullRequestInfo(&pr)
-	ghClient, err := getGithubClient()
+	gh, err := ghclient.New(pr.Repository.Owner.Login, pr.Repository.Name)
 	if err != nil {
 		klog.Errorf("creating github client: %s", err)
 		return err
@@ -32,17 +32,16 @@ func Handle(pr github.PullRequestPayload) error {
 
 	switch pr.Action {
 	case "opened":
-		return openOrSync(gitRepo, &pr, ghClient)
+		return openOrSync(gitRepo, &pr, gh)
 	case "synchronize":
-		return openOrSync(gitRepo, &pr, ghClient)
+		return openOrSync(gitRepo, &pr, gh)
 	case "closed":
 		//TODO: if closed and pr.PullRequest.Merged == true, look for existing PR's pointing to the
 		// merged version and change the base to "master" or pr.PullRequest.Base.Ref
-		return closeBranches(gitRepo, &pr, ghClient)
+		return closeBranches(gitRepo, &pr, gh)
 	case "reopened":
 		//TODO: when re-opened it would be ideal to recover the previous branches, how?
-		return openOrSync(gitRepo, &pr, ghClient)
-
+		return openOrSync(gitRepo, &pr, gh)
 	}
 
 	return nil
@@ -60,15 +59,15 @@ func logPullRequestInfo(pr *github.PullRequestPayload) {
 	klog.Infof("            name: %s", pr.PullRequest.Base.Ref)
 }
 
-func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, ghClient *goGithub.Client) error {
+func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH) error {
+	prNum := int(pr.Number)
 
 	// If the pull request is coming from a local branch
 	if pr.PullRequest.Base.Repo.FullName == pr.PullRequest.Head.Repo.FullName {
 		// We only comment if the PR isn't from a bot, to avoid affecting their behaviour
 		// (e.g. dependabot stops maintaining PRs automatically if they're commented)
 		if pr.Action == "opened" && pr.PullRequest.User.Type != "Bot" {
-			commentOnPR(pr, ghClient,
-				"I see This pr is using the local branch workflow, ignoring it on my side, have fun!")
+			gh.CommentOnPR(prNum, "I see this PR is using the local branch workflow, ignoring it on my side, have fun!")
 		}
 		return nil
 	}
@@ -101,12 +100,12 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, ghClient *goGit
 
 	if err = gitRepo.Push(git.Origin, versionBranch); err != nil {
 		klog.Errorf("Error pushing origin with the new branch: %s", err)
-		commentOnPR(pr, ghClient, fmt.Sprintf("I had an issue pushing the updated branch: %s", err))
+		gh.CommentOnPR(prNum, "I had an issue pushing the updated branch: %s", err)
 		return err
 	}
 
 	if infoMsg != "" {
-		commentOnPR(pr, ghClient, infoMsg)
+		gh.CommentOnPR(prNum, infoMsg)
 	}
 
 	klog.Infof("Pushed branch: %s", versionBranch)
@@ -134,8 +133,8 @@ func getNextVersionBranch(pr *github.PullRequestPayload, branches git.Branches) 
 	return fmt.Sprintf(versionedBranchFmt(pr), num+1)
 }
 
-func closeBranches(gitRepo *git.Git, prPayload *github.PullRequestPayload, ghClient *goGithub.Client) error {
-
+func closeBranches(gitRepo *git.Git, prPayload *github.PullRequestPayload, gh ghclient.GH) error {
+	prNum := int(prPayload.Number)
 	err := gitRepo.EnsureRemote(prPayload.PullRequest.User.Login, prPayload.PullRequest.Head.Repo.SSHURL)
 	if err != nil {
 		klog.Errorf("git remote setup failed: %s", err)
@@ -151,14 +150,14 @@ func closeBranches(gitRepo *git.Git, prPayload *github.PullRequestPayload, ghCli
 	branchesToDelete := filterVersionBranches(prPayload, branches)
 	klog.Infof("Deleting branches: %v", branchesToDelete)
 
-	if err = updateDependingPRs(prPayload, ghClient, branchesToDelete); err != nil {
+	if err = gh.UpdateDependingPRs(prNum, prPayload.PullRequest.Base.Ref, branchesToDelete); err != nil {
 		return err
 	}
 
 	if err = gitRepo.DeleteRemoteBranches(git.Origin, branchesToDelete); err != nil {
 		klog.Errorf("Something happened removing branches: %s", err)
 	} else {
-		commentOnPR(prPayload, ghClient, fmt.Sprintf("Closed branches: %s", branchesToDelete))
+		gh.CommentOnPR(prNum, "Closed branches: %s", branchesToDelete)
 	}
 	return err
 }
