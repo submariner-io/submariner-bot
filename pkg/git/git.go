@@ -65,19 +65,14 @@ func (git *Git) EnsureRemote(name, url string) error {
 	git.repo.DeleteRemote(name)
 	git.repo.CreateRemote(&gogitConfig.RemoteConfig{Name: name, URLs: []string{url}})
 	klog.Infof("Remote %s ensured from %s", name, url)
-	err := git.FetchRemote(name)
 
-	return err
-}
-
-func (git *Git) FetchRemote(name string) error {
 	err := git.repo.Fetch(&gogit.FetchOptions{RemoteName: name, Auth: git.auth})
 	if err == nil || err.Error() == "already up-to-date" {
 		klog.Infof("Remote %s fetched", name)
 		return nil
-	} else {
-		klog.Errorf("Issue fetching remote %s : %s", name, err)
 	}
+
+	klog.Errorf("Issue fetching remote %s : %s", name, err)
 	return err
 }
 
@@ -111,10 +106,7 @@ func (git *Git) GetBranches() (Branches, error) {
 }
 
 func (gitRepo *Git) CreateBranch(versionBranch, sha string) error {
-	return gitRepo.CreateRef("refs/heads/"+versionBranch, sha)
-}
-
-func (gitRepo *Git) CreateRef(refStr, sha string) error {
+	refStr := "refs/heads/" + versionBranch
 	ref := plumbing.ReferenceName(refStr)
 	refHash, err := getHash(sha)
 	if err != nil {
@@ -143,12 +135,9 @@ func getHash(sha string) (plumbing.Hash, error) {
 }
 
 func (gitRepo *Git) Push(versionBranch string) error {
-	return gitRepo.PushRef(origin, "refs/heads/"+versionBranch)
-}
-
-func (gitRepo *Git) PushRef(remote, ref string) error {
+	ref := "refs/heads/" + versionBranch
 	pushOptions := gogit.PushOptions{
-		RemoteName: remote,
+		RemoteName: origin,
 		Auth:       gitRepo.auth,
 		RefSpecs: []gogitConfig.RefSpec{
 			gogitConfig.RefSpec(fmt.Sprintf("+%s:%s", ref, ref))},
