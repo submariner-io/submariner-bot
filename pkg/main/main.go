@@ -26,7 +26,7 @@ func main() {
 	hook, _ := github.New(github.Options.Secret(webhookSecret))
 
 	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		payload, err := hook.Parse(r, github.ReleaseEvent, github.PullRequestEvent)
+		payload, err := hook.Parse(r, handler.EventsToHandle()...)
 		if err != nil {
 			if err == github.ErrEventNotFound {
 				// ok event wasn't one of the ones asked to be parsed

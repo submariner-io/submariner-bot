@@ -6,6 +6,14 @@ import (
 	"github.com/submariner-io/pr-brancher-webhook/pkg/handler/pullrequest"
 )
 
+func EventsToHandle() []github.Event {
+	return []github.Event{
+		github.ReleaseEvent,
+		github.PullRequestEvent,
+		github.PullRequestReviewEvent,
+	}
+}
+
 func Handle(payload interface{}) error {
 	switch payload.(type) {
 
