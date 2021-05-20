@@ -12,7 +12,9 @@ import (
 )
 
 type GH interface {
+	AddLabel(issueOrPRNum int, label string) error
 	CommentOnPR(prNum int, comment string, args ...interface{})
+	ListReviews(prNum int) ([]*github.PullRequestReview, error)
 	UpdateDependingPRs(prNum int, baseRef string, branchesToDelete []string) error
 }
 
@@ -41,6 +43,16 @@ type ghClient struct {
 	repo   string
 }
 
+func (gh ghClient) AddLabel(issueOrPRNum int, label string) error {
+	_, _, err := gh.client.Issues.AddLabelsToIssue(
+		context.Background(),
+		gh.owner,
+		gh.repo,
+		issueOrPRNum,
+		[]string{label})
+	return err
+}
+
 func (gh ghClient) CommentOnPR(prNum int, comment string, args ...interface{}) {
 
 	// In GitHub PRs are a sort of issue, so some operations need to be done on the Issues API
@@ -57,6 +69,17 @@ func (gh ghClient) CommentOnPR(prNum int, comment string, args ...interface{}) {
 	if err != nil {
 		klog.Errorf("Error commenting on pr %d: %s, response: %v", prNum, err, resp)
 	}
+}
+
+func (gh ghClient) ListReviews(prNum int) ([]*github.PullRequestReview, error) {
+	reviews, _, err := gh.client.PullRequests.ListReviews(
+		context.Background(),
+		gh.owner,
+		gh.repo,
+		prNum,
+		&github.ListOptions{PerPage: 100})
+
+	return reviews, err
 }
 
 // fetchPRsWithBase: gets a list of pull requests which have an specific branch as base

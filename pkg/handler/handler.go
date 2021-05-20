@@ -11,6 +11,8 @@ func Handle(payload interface{}) error {
 
 	case github.PullRequestPayload:
 		return pullrequest.Handle(payload.(github.PullRequestPayload))
+	case github.PullRequestReviewPayload:
+		return handlePullRequestReview(payload.(github.PullRequestReviewPayload))
 	}
 	return nil
 }
