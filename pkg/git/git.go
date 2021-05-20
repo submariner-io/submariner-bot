@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 
 	"golang.org/x/crypto/ssh"
 	gogit "gopkg.in/src-d/go-git.v4"
@@ -91,13 +90,11 @@ func (git *Git) GetBranches() (Branches, error) {
 		return nil, err
 	}
 
-	const branchPrefix = "refs/heads/"
-
 	for _, rf := range rfs {
-		name := rf.Name().String()
-		if strings.HasPrefix(name, branchPrefix) {
+		name := rf.Name()
+		if name.IsBranch() {
 			hash := rf.Hash()
-			branchName := name[len(branchPrefix):]
+			branchName := name.Short()
 			branches[branchName] = &hash
 			klog.Infof(" branch: %s hash: %s", branchName, hash.String())
 		}
@@ -105,9 +102,8 @@ func (git *Git) GetBranches() (Branches, error) {
 	return branches, nil
 }
 
-func (gitRepo *Git) CreateBranch(versionBranch, sha string) error {
-	refStr := "refs/heads/" + versionBranch
-	ref := plumbing.ReferenceName(refStr)
+func (gitRepo *Git) CreateBranch(branch, sha string) error {
+	ref := plumbing.NewBranchReferenceName(branch)
 	refHash, err := getHash(sha)
 	if err != nil {
 		return err
@@ -115,7 +111,7 @@ func (gitRepo *Git) CreateBranch(versionBranch, sha string) error {
 	hr := plumbing.NewHashReference(ref, refHash)
 	err = gitRepo.repo.Storer.SetReference(hr)
 	if err != nil {
-		return fmt.Errorf("Error creating reference for %s", refStr)
+		return fmt.Errorf("Error creating reference for %s", ref)
 	}
 	return err
 }
@@ -134,8 +130,8 @@ func getHash(sha string) (plumbing.Hash, error) {
 	return refHash, nil
 }
 
-func (gitRepo *Git) Push(versionBranch string) error {
-	ref := "refs/heads/" + versionBranch
+func (gitRepo *Git) Push(branch string) error {
+	ref := plumbing.NewBranchReferenceName(branch)
 	pushOptions := gogit.PushOptions{
 		RemoteName: origin,
 		Auth:       gitRepo.auth,
@@ -149,7 +145,7 @@ func (gitRepo *Git) DeleteRemoteBranches(branches []string) error {
 	refSpecs := []gogitConfig.RefSpec{}
 
 	for _, branch := range branches {
-		refSpecs = append(refSpecs, gogitConfig.RefSpec(fmt.Sprintf(":refs/heads/%s", branch)))
+		refSpecs = append(refSpecs, gogitConfig.RefSpec(fmt.Sprintf(":%s", plumbing.NewBranchReferenceName(branch))))
 	}
 
 	pushOptions := gogit.PushOptions{
