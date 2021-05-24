@@ -5,6 +5,7 @@ package git
 import (
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 
@@ -35,7 +36,7 @@ func New(name, url string) (*Git, error) {
 	if err != nil {
 		return nil, err
 	}
-	dirName := path.Join("/tmp", "git", name)
+	dirName := dirName(name)
 
 	auth := &ssh2.PublicKeys{User: "git", Signer: signer}
 	auth.HostKeyCallback = ssh.InsecureIgnoreHostKey()
@@ -58,6 +59,10 @@ func New(name, url string) (*Git, error) {
 	err = git.EnsureRemote(origin, url)
 
 	return git, err
+}
+
+func dirName(name string) string {
+	return path.Join("/tmp", "git", name)
 }
 
 func (git *Git) EnsureRemote(name, url string) error {
@@ -158,4 +163,26 @@ func (gitRepo *Git) DeleteRemoteBranches(branches []string) error {
 	origin, err := gitRepo.repo.Remote(origin)
 	origin.Push(&pushOptions)
 	return err
+}
+
+func (g *Git) CheckoutHash(hash string) error {
+	worktree, err := g.repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	err = worktree.Checkout(&gogit.CheckoutOptions{
+		Hash:  plumbing.NewHash(hash),
+		Force: true,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g *Git) ReadFile(file string) ([]byte, error) {
+	filename := path.Join(dirName(g.name), file)
+	return ioutil.ReadFile(filename)
 }
