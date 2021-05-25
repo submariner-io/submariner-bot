@@ -14,5 +14,5 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: pr-brancher-webhook
+              serviceName: submariner-bot
               servicePort: 80
