@@ -78,7 +78,7 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH)
 		return err
 	}
 
-	branches, err := gitRepo.GetBranches(git.Origin)
+	branches, err := gitRepo.GetBranches()
 	if err != nil {
 		klog.Errorf("Error getting branches for origin repo")
 		return nil
@@ -98,7 +98,7 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH)
 
 	klog.Infof(infoMsg)
 
-	if err = gitRepo.Push(git.Origin, versionBranch); err != nil {
+	if err = gitRepo.Push(versionBranch); err != nil {
 		klog.Errorf("Error pushing origin with the new branch: %s", err)
 		gh.CommentOnPR(prNum, "I had an issue pushing the updated branch: %s", err)
 		return err
@@ -141,7 +141,7 @@ func closeBranches(gitRepo *git.Git, prPayload *github.PullRequestPayload, gh gh
 		return err
 	}
 
-	branches, err := gitRepo.GetBranches(git.Origin)
+	branches, err := gitRepo.GetBranches()
 	if err != nil {
 		klog.Errorf("Error getting branches for origin repo")
 		return nil
@@ -154,7 +154,7 @@ func closeBranches(gitRepo *git.Git, prPayload *github.PullRequestPayload, gh gh
 		return err
 	}
 
-	if err = gitRepo.DeleteRemoteBranches(git.Origin, branchesToDelete); err != nil {
+	if err = gitRepo.DeleteRemoteBranches(branchesToDelete); err != nil {
 		klog.Errorf("Something happened removing branches: %s", err)
 	} else {
 		gh.CommentOnPR(prNum, "Closed branches: %s", branchesToDelete)
