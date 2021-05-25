@@ -80,6 +80,9 @@ func readConfig(prr github.PullRequestReviewPayload) (*botConfig, error) {
 		return nil, err
 	}
 
+	gitRepo.Lock()
+	defer gitRepo.Unlock()
+
 	err = gitRepo.EnsureRemote(prr.PullRequest.User.Login, prr.PullRequest.Head.Repo.SSHURL)
 	if err != nil {
 		return nil, err
