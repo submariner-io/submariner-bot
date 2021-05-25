@@ -25,6 +25,7 @@ type botConfig struct {
 
 func handlePullRequestReview(prr github.PullRequestReviewPayload) error {
 	prNum := int(prr.PullRequest.Number)
+	klog.Infof("handling PR review on %s PR #%d", prr.Repository.FullName, prNum)
 	gh, err := ghclient.New(prr.Repository.Owner.Login, prr.Repository.Name)
 	if err != nil {
 		klog.Errorf("creating github client: %s", err)
@@ -38,7 +39,7 @@ func handlePullRequestReview(prr github.PullRequestReviewPayload) error {
 	}
 
 	if config.LabelApproved == nil {
-		klog.Infof("label when approved not enabled in bot config for PR %s/#d", prr.Repository.Owner.Login, prr.PullRequest.Number)
+		klog.Infof("label when approved not enabled in bot config for PR %s/#d", prr.Repository.Owner.Login, prNum)
 		return nil
 	}
 
@@ -55,19 +56,26 @@ func handlePullRequestReview(prr github.PullRequestReviewPayload) error {
 		}
 	}
 
-	if approvals >= *config.LabelApproved.Approvals {
-		err := gh.AddLabel(prNum, *config.LabelApproved.Label)
-		if err != nil {
-			klog.Errorf("adding label to pull request: %s", err)
-			return err
-		}
+	minApprovals := *config.LabelApproved.Approvals
+	if approvals < minApprovals {
+		klog.Infof("%d not enough approvals for PR #%d, need at least %d", approvals, prNum, minApprovals)
+		return nil
+	}
+
+	label := *config.LabelApproved.Label
+	klog.Infof("adding label %s to PR #%d", label, prNum)
+	err = gh.AddLabel(prNum, label)
+	if err != nil {
+		klog.Errorf("error while adding label %s to PR #%d: %s", label, prNum, err)
+		return err
 	}
 
 	return nil
 }
 
 func readConfig(prr github.PullRequestReviewPayload) (*botConfig, error) {
-	gitRepo, err := git.New(prr.PullRequest.Base.Repo.FullName, prr.PullRequest.Base.Repo.SSHURL)
+	repoFullName := prr.PullRequest.Base.Repo.FullName
+	gitRepo, err := git.New(repoFullName, prr.PullRequest.Base.Repo.SSHURL)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +96,7 @@ func readConfig(prr github.PullRequestReviewPayload) (*botConfig, error) {
 		return nil, err
 	}
 
+	klog.Infof("read the following config for %s: %s", repoFullName, string(buf))
 	config := &botConfig{}
 	err = yaml.Unmarshal(buf, config)
 	if err != nil {
