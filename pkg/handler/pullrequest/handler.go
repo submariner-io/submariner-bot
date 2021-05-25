@@ -30,6 +30,9 @@ func Handle(pr github.PullRequestPayload) error {
 		return err
 	}
 
+	gitRepo.Lock()
+	defer gitRepo.Unlock()
+
 	switch pr.Action {
 	case "opened":
 		return openOrSync(gitRepo, &pr, gh)

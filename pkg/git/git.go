@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sync"
 
 	"golang.org/x/crypto/ssh"
 	gogit "gopkg.in/src-d/go-git.v4"
@@ -22,14 +23,24 @@ import (
 
 const origin = "origin"
 
+var projectsLock sync.Mutex
+var projects map[string]*Git = make(map[string]*Git)
+
 type Git struct {
 	repo *gogit.Repository
 	name string
 	url  string
 	auth transport.AuthMethod
+	lock sync.Mutex
 }
 
 func New(name, url string) (*Git, error) {
+	projectsLock.Lock()
+	defer projectsLock.Unlock()
+
+	if val, ok := projects[name]; ok {
+		return val, nil
+	}
 
 	signer, err := config.GetSSHKey()
 
@@ -57,12 +68,21 @@ func New(name, url string) (*Git, error) {
 	git := &Git{repo: repo, url: url, name: name, auth: auth}
 
 	err = git.EnsureRemote(origin, url)
+	projects[name] = git
 
 	return git, err
 }
 
 func dirName(name string) string {
 	return path.Join("/tmp", "git", name)
+}
+
+func (git *Git) Lock() {
+	git.lock.Lock()
+}
+
+func (git *Git) Unlock() {
+	git.lock.Unlock()
 }
 
 func (git *Git) EnsureRemote(name, url string) error {
