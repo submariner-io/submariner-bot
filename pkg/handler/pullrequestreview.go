@@ -88,7 +88,7 @@ func readConfig(prr github.PullRequestReviewPayload) (*botConfig, error) {
 		return nil, err
 	}
 
-	gitRepo.CheckoutHash(prr.PullRequest.Head.Sha)
+	gitRepo.CheckoutHash(prr.PullRequest.Base.Sha)
 	if err != nil {
 		return nil, err
 	}
