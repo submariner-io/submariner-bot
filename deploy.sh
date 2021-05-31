@@ -2,19 +2,24 @@
 set -e
 set -x
 
-docker build -t quay.io/submariner/submariner-bot:dev .
-docker push quay.io/submariner/submariner-bot:dev
+NS=pr-brancher-webhook
 
-kubectl -n pr-brancher-webhook delete pods -l app=submariner-bot
+docker build -t quay.io/submariner/submariner-bot:dev .
+docker tag quay.io/submariner/submariner-bot:dev quay.io/submariner/submariner-bot:$(git describe --tags)
+docker push quay.io/submariner/submariner-bot:dev
+docker push quay.io/submariner/submariner-bot:$(git describe --tags)
+
+kubectl -n $NS delete pods -l app=submariner-bot
+
 sleep 1
 
 
-while [[ $(kubectl get pods -n pr-brancher-webhook -l app=submariner-bot -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
+while [[ $(kubectl get pods -n $NS -l app=submariner-bot -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
 	echo "waiting for pod" && sleep 1
 done
-kubectl get pods -n pr-brancher-webhook
+kubectl get pods -n $NS
 
-POD=$(kubectl get pod -n pr-brancher-webhook -l app=submariner-bot -o jsonpath="{.items[0].metadata.name}")
-kubectl logs -n pr-brancher-webhook -f $POD
+POD=$(kubectl get pod -n $NS -l app=submariner-bot -o jsonpath="{.items[0].metadata.name}")
+kubectl logs -n $NS -f $POD
 
 
