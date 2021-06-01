@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/webhooks/github"
+	"github.com/submariner-io/pr-brancher-webhook/pkg/config/repoconfig"
 	"k8s.io/klog"
 
 	"github.com/submariner-io/pr-brancher-webhook/pkg/ghclient"
@@ -65,17 +66,29 @@ func logPullRequestInfo(pr *github.PullRequestPayload) {
 func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH) error {
 	prNum := int(pr.Number)
 
+	config, err := repoconfig.Read(pr.PullRequest.Base.Repo.SSHURL, pr.PullRequest.Base.Repo.FullName, pr.PullRequest.Base.Sha)
+	if err != nil {
+		klog.Infof("Error reading bot config: %s", err)
+	}
+
+	readyToReviewMsg := ""
+	if config != nil && config.LabelApproved != nil {
+		readyToReviewMsg += fmt.Sprintf("\n🚀 Full E2E won't run until the %q label is applied. " +
+			"I will add it automatically once the PR has %d approvals, or you can add it manually.",
+			*config.LabelApproved.Label, config.LabelApproved.Approvals)
+	}
+
 	// If the pull request is coming from a local branch
 	if pr.PullRequest.Base.Repo.FullName == pr.PullRequest.Head.Repo.FullName {
 		// We only comment if the PR isn't from a bot, to avoid affecting their behaviour
 		// (e.g. dependabot stops maintaining PRs automatically if they're commented)
 		if pr.Action == "opened" && pr.PullRequest.User.Type != "Bot" {
-			gh.CommentOnPR(prNum, "I see this PR is using the local branch workflow, ignoring it on my side, have fun!")
+			gh.CommentOnPR(prNum, "I see this PR is using the local branch workflow, ignoring it on my side, have fun!" + readyToReviewMsg)
 		}
 		return nil
 	}
 
-	err := gitRepo.EnsureRemote(pr.PullRequest.User.Login, pr.PullRequest.Head.Repo.SSHURL)
+	err = gitRepo.EnsureRemote(pr.PullRequest.User.Login, pr.PullRequest.Head.Repo.SSHURL)
 	if err != nil {
 		klog.Errorf("git remote setup failed: %s", err)
 		return err
@@ -96,7 +109,7 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH)
 
 	var infoMsg string
 	if branches[versionBranch] == nil {
-		infoMsg = fmt.Sprintf("Created branch: %s", versionBranch)
+		infoMsg = fmt.Sprintf("Created branch: %s %s", versionBranch, readyToReviewMsg)
 	}
 
 	klog.Infof(infoMsg)

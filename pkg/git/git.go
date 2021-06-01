@@ -21,7 +21,7 @@ import (
 	"github.com/submariner-io/pr-brancher-webhook/pkg/config"
 )
 
-const origin = "origin"
+const Origin = "origin"
 
 var projectsLock sync.Mutex
 var projects map[string]*Git = make(map[string]*Git)
@@ -67,7 +67,7 @@ func New(name, url string) (*Git, error) {
 
 	git := &Git{repo: repo, url: url, name: name, auth: auth}
 
-	err = git.EnsureRemote(origin, url)
+	err = git.EnsureRemote(Origin, url)
 	projects[name] = git
 
 	return git, err
@@ -110,7 +110,7 @@ type Branches map[string]*plumbing.Hash
 func (git *Git) GetBranches() (Branches, error) {
 	branches := make(map[string]*plumbing.Hash)
 
-	remote, err := git.repo.Remote(origin)
+	remote, err := git.repo.Remote(Origin)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func getHash(sha string) (plumbing.Hash, error) {
 func (gitRepo *Git) Push(branch string) error {
 	ref := plumbing.NewBranchReferenceName(branch)
 	pushOptions := gogit.PushOptions{
-		RemoteName: origin,
+		RemoteName: Origin,
 		Auth:       gitRepo.auth,
 		RefSpecs: []gogitConfig.RefSpec{
 			gogitConfig.RefSpec(fmt.Sprintf("+%s:%s", ref, ref))},
@@ -179,13 +179,13 @@ func (gitRepo *Git) DeleteRemoteBranches(branches []string) error {
 	}
 
 	pushOptions := gogit.PushOptions{
-		RemoteName: origin,
+		RemoteName: Origin,
 		Auth:       gitRepo.auth,
 		RefSpecs:   refSpecs,
 		Progress:   os.Stderr,
 	}
 
-	origin, err := gitRepo.repo.Remote(origin)
+	origin, err := gitRepo.repo.Remote(Origin)
 	if err != nil {
 		return err
 	}

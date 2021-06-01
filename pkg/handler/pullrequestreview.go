@@ -1,27 +1,12 @@
 package handler
 
 import (
-	"fmt"
-
 	"github.com/go-playground/webhooks/github"
-	"gopkg.in/yaml.v2"
+	"github.com/submariner-io/pr-brancher-webhook/pkg/config/repoconfig"
 	"k8s.io/klog"
 
 	"github.com/submariner-io/pr-brancher-webhook/pkg/ghclient"
-	"github.com/submariner-io/pr-brancher-webhook/pkg/git"
 )
-
-const (
-	defaultApprovals = 2
-	defaultLabel     = "ready-to-test"
-)
-
-type botConfig struct {
-	LabelApproved *struct {
-		Approvals *int
-		Label     *string
-	} `yaml:"label-approved"`
-}
 
 func handlePullRequestReview(prr github.PullRequestReviewPayload) error {
 	prNum := int(prr.PullRequest.Number)
@@ -32,7 +17,7 @@ func handlePullRequestReview(prr github.PullRequestReviewPayload) error {
 		return err
 	}
 
-	config, err := readConfig(prr)
+	config, err := repoconfig.Read(prr.PullRequest.Base.Repo.SSHURL, prr.PullRequest.Base.Repo.FullName, prr.PullRequest.Base.Sha)
 	if err != nil {
 		klog.Errorf("reading bot config: %s", err)
 		return err
@@ -71,52 +56,4 @@ func handlePullRequestReview(prr github.PullRequestReviewPayload) error {
 	}
 
 	return nil
-}
-
-func readConfig(prr github.PullRequestReviewPayload) (*botConfig, error) {
-	repoFullName := prr.PullRequest.Base.Repo.FullName
-	gitRepo, err := git.New(repoFullName, prr.PullRequest.Base.Repo.SSHURL)
-	if err != nil {
-		return nil, err
-	}
-
-	gitRepo.Lock()
-	defer gitRepo.Unlock()
-
-	err = gitRepo.EnsureRemote(prr.PullRequest.User.Login, prr.PullRequest.Head.Repo.SSHURL)
-	if err != nil {
-		return nil, err
-	}
-
-	err = gitRepo.CheckoutHash(prr.PullRequest.Base.Sha)
-	if err != nil {
-		return nil, err
-	}
-
-	filename := ".submarinerbot.yaml"
-	buf, err := gitRepo.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	klog.Infof("read the following config for %s: %s", repoFullName, string(buf))
-	config := &botConfig{}
-	err = yaml.Unmarshal(buf, config)
-	if err != nil {
-		return nil, fmt.Errorf("in file %q: %v", filename, err)
-	}
-
-	if config.LabelApproved != nil {
-		if config.LabelApproved.Approvals == nil {
-			v := defaultApprovals
-			config.LabelApproved.Approvals = &v
-		}
-
-		if config.LabelApproved.Label == nil {
-			v := defaultLabel
-			config.LabelApproved.Label = &v
-		}
-	}
-
-	return config, nil
 }
