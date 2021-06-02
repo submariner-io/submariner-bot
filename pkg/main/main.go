@@ -38,20 +38,31 @@ func main() {
 		err = handler.Handle(payload)
 		if err != nil {
 			w.WriteHeader(500)
-			w.Write([]byte("An error happened: " + err.Error()))
+			_, err := w.Write([]byte("An error happened: " + err.Error()))
+			if err != nil {
+				klog.Errorf("Failed to write response: %s", err)
+			}
 		}
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			w.WriteHeader(200)
-			w.Write([]byte(":-)"))
+			_, err := w.Write([]byte(":-)"))
+			if err != nil {
+				klog.Errorf("Failed to write response: %s", err)
+			}
 		} else {
 			w.WriteHeader(404)
-			w.Write([]byte("Nothing here..."))
+			_, err := w.Write([]byte("Nothing here..."))
+			if err != nil {
+				klog.Errorf("Failed to write response: %s", err)
+			}
 		}
 	})
 
 	klog.Infof("Listening for webhook requests on %s", listenAddr)
-	http.ListenAndServe(listenAddr, nil)
+	if err := http.ListenAndServe(listenAddr, nil); err != nil {
+		klog.Fatalf("Can't start listening for requests: %s", err)
+	}
 }

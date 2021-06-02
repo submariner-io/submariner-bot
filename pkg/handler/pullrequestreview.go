@@ -39,7 +39,7 @@ func handlePullRequestReview(prr github.PullRequestReviewPayload) error {
 	}
 
 	if config.LabelApproved == nil {
-		klog.Infof("label when approved not enabled in bot config for PR %s/#d", prr.Repository.Owner.Login, prNum)
+		klog.Infof("label when approved not enabled in bot config for PR %s/#%d", prr.Repository.Owner.Login, prNum)
 		return nil
 	}
 
@@ -88,7 +88,7 @@ func readConfig(prr github.PullRequestReviewPayload) (*botConfig, error) {
 		return nil, err
 	}
 
-	gitRepo.CheckoutHash(prr.PullRequest.Base.Sha)
+	err = gitRepo.CheckoutHash(prr.PullRequest.Base.Sha)
 	if err != nil {
 		return nil, err
 	}

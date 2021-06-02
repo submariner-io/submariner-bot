@@ -65,7 +65,7 @@ func createWebhookSecretInK8sSecret(secret *v1.Secret) (string, error) {
 	}
 	secret.Data[webhookSecretEntry] = []byte(pwd)
 
-	klog.Info("Webhook secret created: %s", pwd)
+	klog.Infof("Webhook secret created: %s", pwd)
 
 	return pwd, updateK8sSecret(secret)
 }

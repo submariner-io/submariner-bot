@@ -86,11 +86,16 @@ func (git *Git) Unlock() {
 }
 
 func (git *Git) EnsureRemote(name, url string) error {
-	git.repo.DeleteRemote(name)
-	git.repo.CreateRemote(&gogitConfig.RemoteConfig{Name: name, URLs: []string{url}})
+	if err := git.repo.DeleteRemote(name); err != nil {
+		return err
+	}
+	_, err := git.repo.CreateRemote(&gogitConfig.RemoteConfig{Name: name, URLs: []string{url}})
+	if err != nil {
+		return err
+	}
 	klog.Infof("Remote %s ensured from %s", name, url)
 
-	err := git.repo.Fetch(&gogit.FetchOptions{RemoteName: name, Auth: git.auth})
+	err = git.repo.Fetch(&gogit.FetchOptions{RemoteName: name, Auth: git.auth})
 	if err == nil || err.Error() == "already up-to-date" {
 		klog.Infof("Remote %s fetched", name)
 		return nil
@@ -181,8 +186,10 @@ func (gitRepo *Git) DeleteRemoteBranches(branches []string) error {
 	}
 
 	origin, err := gitRepo.repo.Remote(origin)
-	origin.Push(&pushOptions)
-	return err
+	if err != nil {
+		return err
+	}
+	return origin.Push(&pushOptions)
 }
 
 func (g *Git) CheckoutHash(hash string) error {

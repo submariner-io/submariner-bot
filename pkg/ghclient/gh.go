@@ -111,11 +111,11 @@ func (gh ghClient) UpdateDependingPRs(prNum int, baseRef string, branchesToDelet
 			// The PR payloadPR has been merged to pr.PullRequest.Base.Ref, so that should be the new base
 			// of the dependent PRs
 			dependentPr.Base.Ref = &baseRef
-			gh.client.PullRequests.Edit(context.Background(), gh.owner, gh.repo,
+			_, _, err := gh.client.PullRequests.Edit(context.Background(), gh.owner, gh.repo,
 				*dependentPr.Number, dependentPr)
 
 			if err != nil {
-				klog.Error("updating dependent PR: %s : %s", *dependentPr.HTMLURL, err)
+				klog.Errorf("updating dependent PR: %s : %s", *dependentPr.HTMLURL, err)
 				gh.CommentOnPR(prNum, "Error updating dependent PRs: %s : %s", *dependentPr.HTMLURL, err)
 				return err
 			}

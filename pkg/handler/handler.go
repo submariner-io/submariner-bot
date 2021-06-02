@@ -15,12 +15,12 @@ func EventsToHandle() []github.Event {
 }
 
 func Handle(payload interface{}) error {
-	switch payload.(type) {
+	switch payload := payload.(type) {
 
 	case github.PullRequestPayload:
-		return pullrequest.Handle(payload.(github.PullRequestPayload))
+		return pullrequest.Handle(payload)
 	case github.PullRequestReviewPayload:
-		return handlePullRequestReview(payload.(github.PullRequestReviewPayload))
+		return handlePullRequestReview(payload)
 	}
 	return nil
 }

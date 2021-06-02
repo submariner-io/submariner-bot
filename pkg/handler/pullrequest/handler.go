@@ -169,7 +169,7 @@ func filterVersionBranches(pr *github.PullRequestPayload, branches git.Branches)
 	branchesToDelete := []string{}
 	verBase := versionedBranch(pr) + "/"
 	verBranch := versionedBranch(pr)
-	for branch, _ := range branches {
+	for branch := range branches {
 		if strings.HasPrefix(branch, verBase) || branch == verBranch {
 			branchesToDelete = append(branchesToDelete, branch)
 		}

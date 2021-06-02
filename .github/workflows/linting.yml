@@ -1,0 +1,44 @@
+---
+name: Linting
+
+on:
+  pull_request:
+
+jobs:
+  gitlint:
+    name: Commit Message(s)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Run gitlint
+        run: make gitlint
+
+  golangci-lint:
+    name: Go
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+      - name: Run golangci-lint
+        run: make golangci-lint
+
+  markdownlint:
+    name: Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+      - name: Run markdownlint
+        run: make markdownlint
+
+  yaml-lint:
+    name: YAML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+      - name: Run yamllint
+        run: make yamllint
