@@ -1,4 +1,7 @@
 /vendor
+.dapper
 .project
 .settings
 *.coverprofile
+Dockerfile.*
+Makefile.*
