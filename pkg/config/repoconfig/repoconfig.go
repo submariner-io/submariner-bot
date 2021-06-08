@@ -12,7 +12,7 @@ const (
 	defaultApprovals = 2
 	defaultLabel     = "ready-to-test"
 	filename         = ".submarinerbot.yaml"
-	)
+)
 
 type BotConfig struct {
 	LabelApproved *struct {
@@ -21,22 +21,9 @@ type BotConfig struct {
 	} `yaml:"label-approved"`
 }
 
+func Read(gitRepo *git.Git, sha string) (*BotConfig, error) {
 
-func Read(url, repo, sha string) (*BotConfig, error) {
-	gitRepo, err := git.New(repo, url)
-	if err != nil {
-		return nil, err
-	}
-
-	gitRepo.Lock()
-	defer gitRepo.Unlock()
-
-	err = gitRepo.EnsureRemote(git.Origin, url)
-	if err != nil {
-		return nil, err
-	}
-
-	err = gitRepo.CheckoutHash(sha)
+	err := gitRepo.CheckoutHash(sha)
 	if err != nil {
 		return nil, err
 	}

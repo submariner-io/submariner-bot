@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/go-playground/webhooks/github"
 	"github.com/submariner-io/pr-brancher-webhook/pkg/config/repoconfig"
+	"github.com/submariner-io/pr-brancher-webhook/pkg/git"
 	"k8s.io/klog"
 
 	"github.com/submariner-io/pr-brancher-webhook/pkg/ghclient"
@@ -17,9 +18,18 @@ func handlePullRequestReview(prr github.PullRequestReviewPayload) error {
 		return err
 	}
 
-	config, err := repoconfig.Read(prr.PullRequest.Base.Repo.SSHURL, prr.PullRequest.Base.Repo.FullName, prr.PullRequest.Base.Sha)
+	gitRepo, err := git.New(prr.PullRequest.Base.Repo.FullName, prr.PullRequest.Base.Repo.SSHURL)
 	if err != nil {
-		klog.Errorf("reading bot config: %s", err)
+		klog.Errorf("creating git object: %s", err)
+		return err
+	}
+
+	gitRepo.Lock()
+	defer gitRepo.Unlock()
+
+	config, err := repoconfig.Read(gitRepo, prr.PullRequest.Base.Sha)
+	if err != nil {
+		klog.Infof("Error reading bot config: %s", err)
 		return err
 	}
 

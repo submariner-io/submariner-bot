@@ -66,14 +66,14 @@ func logPullRequestInfo(pr *github.PullRequestPayload) {
 func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH) error {
 	prNum := int(pr.Number)
 
-	config, err := repoconfig.Read(pr.PullRequest.Base.Repo.SSHURL, pr.PullRequest.Base.Repo.FullName, pr.PullRequest.Base.Sha)
+	config, err := repoconfig.Read(gitRepo, pr.PullRequest.Base.Sha)
 	if err != nil {
 		klog.Infof("Error reading bot config: %s", err)
 	}
 
 	readyToReviewMsg := ""
 	if config != nil && config.LabelApproved != nil {
-		readyToReviewMsg += fmt.Sprintf("\n🚀 Full E2E won't run until the %q label is applied. " +
+		readyToReviewMsg += fmt.Sprintf("\n🚀 Full E2E won't run until the %q label is applied. "+
 			"I will add it automatically once the PR has %d approvals, or you can add it manually.",
 			*config.LabelApproved.Label, config.LabelApproved.Approvals)
 	}
@@ -83,7 +83,7 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH)
 		// We only comment if the PR isn't from a bot, to avoid affecting their behaviour
 		// (e.g. dependabot stops maintaining PRs automatically if they're commented)
 		if pr.Action == "opened" && pr.PullRequest.User.Type != "Bot" {
-			gh.CommentOnPR(prNum, "I see this PR is using the local branch workflow, ignoring it on my side, have fun!" + readyToReviewMsg)
+			gh.CommentOnPR(prNum, "I see this PR is using the local branch workflow, ignoring it on my side, have fun!"+readyToReviewMsg)
 		}
 		return nil
 	}
