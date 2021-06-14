@@ -87,7 +87,9 @@ func (git *Git) Unlock() {
 
 func (git *Git) EnsureRemote(name, url string) error {
 	if err := git.repo.DeleteRemote(name); err != nil {
-		return err
+		if err != gogit.ErrRemoteNotFound {
+			return err
+		}
 	}
 	_, err := git.repo.CreateRemote(&gogitConfig.RemoteConfig{Name: name, URLs: []string{url}})
 	if err != nil {
