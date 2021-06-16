@@ -88,7 +88,7 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH)
 		return nil
 	}
 
-	err = gitRepo.EnsureRemote(pr.PullRequest.User.Login, pr.PullRequest.Head.Repo.SSHURL)
+	err = gitRepo.EnsureAndFetch(pr.PullRequest.User.Login, pr.PullRequest.Head.Repo.SSHURL)
 	if err != nil {
 		klog.Errorf("git remote setup failed: %s", err)
 		return err
@@ -151,7 +151,7 @@ func getNextVersionBranch(pr *github.PullRequestPayload, branches git.Branches) 
 
 func closeBranches(gitRepo *git.Git, prPayload *github.PullRequestPayload, gh ghclient.GH) error {
 	prNum := int(prPayload.Number)
-	err := gitRepo.EnsureRemote(prPayload.PullRequest.User.Login, prPayload.PullRequest.Head.Repo.SSHURL)
+	err := gitRepo.EnsureAndFetch(prPayload.PullRequest.User.Login, prPayload.PullRequest.Head.Repo.SSHURL)
 	if err != nil {
 		klog.Errorf("git remote setup failed: %s", err)
 		return err
