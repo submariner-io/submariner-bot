@@ -39,7 +39,10 @@ func New(name, url string) (*Git, error) {
 	defer projectsLock.Unlock()
 
 	if val, ok := projects[name]; ok {
-		return val, nil
+		val.Lock()
+		defer val.Unlock()
+		err := val.EnsureAndFetchOrigin()
+		return val, err
 	}
 
 	signer, err := config.GetSSHKey()
@@ -67,10 +70,14 @@ func New(name, url string) (*Git, error) {
 
 	git := &Git{repo: repo, url: url, name: name, auth: auth}
 
-	err = git.EnsureRemote(Origin, url)
+	err = git.EnsureAndFetchOrigin()
 	projects[name] = git
 
 	return git, err
+}
+
+func (git *Git) EnsureAndFetchOrigin() error {
+	return git.EnsureAndFetch(Origin, git.url)
 }
 
 func dirName(name string) string {
@@ -85,7 +92,7 @@ func (git *Git) Unlock() {
 	git.lock.Unlock()
 }
 
-func (git *Git) EnsureRemote(name, url string) error {
+func (git *Git) EnsureAndFetch(name, url string) error {
 	if err := git.repo.DeleteRemote(name); err != nil {
 		if err != gogit.ErrRemoteNotFound {
 			return err
