@@ -5,8 +5,10 @@ go 1.12
 require (
 	github.com/go-playground/webhooks v5.17.0+incompatible
 	github.com/google/go-github/v28 v28.1.1
+	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/gomega v1.13.0
 	github.com/sethvargo/go-password v0.2.0
-	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.4.0

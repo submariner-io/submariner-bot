@@ -8,21 +8,43 @@ import (
 	"k8s.io/klog"
 )
 
-const (
-	defaultApprovals = 2
-	defaultLabel     = "ready-to-test"
-	filename         = ".submarinerbot.yaml"
-)
-
 type BotConfig struct {
-	LabelApproved *struct {
-		Approvals *int
-		Label     *string
-	} `yaml:"label-approved"`
+	yaml BotConfigYAML
+}
+
+type BotConfigLabelApproved struct {
+	yaml LabelApprovedYAML
+}
+
+func (c *BotConfig) HasLabelApproved() bool {
+	return c.yaml.LabelApproved != nil
+}
+
+func (c *BotConfig) LabelApproved() *BotConfigLabelApproved {
+	if !c.HasLabelApproved() {
+		return nil
+	}
+
+	return &BotConfigLabelApproved{yaml: *c.yaml.LabelApproved}
+}
+
+func (c *BotConfigLabelApproved) Approvals() int {
+	if c.yaml.Approvals == nil {
+		return defaultApprovals
+	}
+
+	return *c.yaml.Approvals
+}
+
+func (c *BotConfigLabelApproved) Label() string {
+	if c.yaml.Label == nil {
+		return defaultLabel
+	}
+
+	return *c.yaml.Label
 }
 
 func Read(gitRepo *git.Git, sha string) (*BotConfig, error) {
-
 	err := gitRepo.CheckoutHash(sha)
 	if err != nil {
 		return nil, err
@@ -33,24 +55,17 @@ func Read(gitRepo *git.Git, sha string) (*BotConfig, error) {
 		return nil, err
 	}
 
-	klog.Infof("read the following config for %s: %s", git.Origin, string(buf))
-	config := &BotConfig{}
-	err = yaml.Unmarshal(buf, config)
+	config, err := parseConfigYAML(buf)
 	if err != nil {
-		return nil, fmt.Errorf("in file %q: %v", filename, err)
-	}
-
-	if config.LabelApproved != nil {
-		if config.LabelApproved.Approvals == nil {
-			v := defaultApprovals
-			config.LabelApproved.Approvals = &v
-		}
-
-		if config.LabelApproved.Label == nil {
-			v := defaultLabel
-			config.LabelApproved.Label = &v
-		}
+		klog.Errorf("Error reading the following config for %s:\n%s", sha, string(buf))
+		return nil, fmt.Errorf("in file %q from %s: %v", filename, sha, err)
 	}
 
 	return config, nil
+}
+
+func parseConfigYAML(buf []byte) (*BotConfig, error) {
+	configYAML := BotConfigYAML{}
+	err := yaml.Unmarshal(buf, &configYAML)
+	return &BotConfig{yaml: configYAML}, err
 }

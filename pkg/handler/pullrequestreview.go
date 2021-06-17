@@ -33,7 +33,7 @@ func handlePullRequestReview(prr github.PullRequestReviewPayload) error {
 		return err
 	}
 
-	if config.LabelApproved == nil {
+	if !config.HasLabelApproved() {
 		klog.Infof("label when approved not enabled in bot config for PR %s/#%d", prr.Repository.Owner.Login, prNum)
 		return nil
 	}
@@ -51,13 +51,13 @@ func handlePullRequestReview(prr github.PullRequestReviewPayload) error {
 		}
 	}
 
-	minApprovals := *config.LabelApproved.Approvals
+	minApprovals := config.LabelApproved().Approvals()
 	if approvals < minApprovals {
 		klog.Infof("%d not enough approvals for PR #%d, need at least %d", approvals, prNum, minApprovals)
 		return nil
 	}
 
-	label := *config.LabelApproved.Label
+	label := config.LabelApproved().Label()
 	klog.Infof("adding label %s to PR #%d", label, prNum)
 	err = gh.AddLabel(prNum, label)
 	if err != nil {
