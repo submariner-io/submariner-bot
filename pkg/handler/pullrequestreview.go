@@ -33,7 +33,7 @@ func handlePullRequestReview(prr github.PullRequestReviewPayload) error {
 		return err
 	}
 
-	if !config.HasLabelApproved() {
+	if config.LabelApproved() == nil {
 		klog.Infof("label when approved not enabled in bot config for PR %s/#%d", prr.Repository.Owner.Login, prNum)
 		return nil
 	}

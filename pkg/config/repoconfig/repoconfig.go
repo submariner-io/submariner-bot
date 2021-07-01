@@ -16,12 +16,8 @@ type BotConfigLabelApproved struct {
 	yaml LabelApprovedYAML
 }
 
-func (c *BotConfig) HasLabelApproved() bool {
-	return c.yaml.LabelApproved != nil
-}
-
 func (c *BotConfig) LabelApproved() *BotConfigLabelApproved {
-	if !c.HasLabelApproved() {
+	if c.yaml.LabelApproved == nil {
 		return nil
 	}
 

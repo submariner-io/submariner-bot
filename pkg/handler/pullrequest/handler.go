@@ -72,7 +72,7 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH)
 	}
 
 	readyToReviewMsg := ""
-	if config.HasLabelApproved() {
+	if config.LabelApproved() != nil {
 		readyToReviewMsg += fmt.Sprintf("\n🚀 Full E2E won't run until the %q label is applied. "+
 			"I will add it automatically once the PR has %d approvals, or you can add it manually.",
 			config.LabelApproved().Label(), config.LabelApproved().Approvals())
