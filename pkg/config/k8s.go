@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"io/ioutil"
 
 	v1meta "k8s.io/api/core/v1"
@@ -36,7 +37,7 @@ func getK8sSecret() (*v1meta.Secret, error) {
 		return nil, err
 	}
 
-	secret, err := clientSet.CoreV1().Secrets(namespace).Get(secretName, v1.GetOptions{})
+	secret, err := clientSet.CoreV1().Secrets(namespace).Get(context.TODO(), secretName, v1.GetOptions{})
 	if err != nil {
 		klog.Errorf("Error looking up for %s secret in namespace %s : %s", secretName, namespace, err)
 		return nil, err
@@ -54,7 +55,7 @@ func updateK8sSecret(secret *v1meta.Secret) error {
 	if err != nil {
 		return err
 	}
-	_, err = clientSet.CoreV1().Secrets(namespace).Update(secret)
+	_, err = clientSet.CoreV1().Secrets(namespace).Update(context.TODO(), secret, v1.UpdateOptions{})
 	return err
 }
 
