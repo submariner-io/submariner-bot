@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/go-playground/webhooks v5.17.0+incompatible
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/go-github/v28 v28.1.1
 	github.com/sethvargo/go-password v0.2.0
 	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
@@ -18,3 +19,6 @@ require (
 )
 
 replace gopkg.in/src-d/go-git.v4 v4.13.1 => github.com/src-d/go-git v0.0.0-20190801152248-0d1a009cbb60
+
+// CVE-2020-26160
+replace github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt v3.2.1+incompatible
