@@ -3,5 +3,5 @@
 .project
 .settings
 *.coverprofile
-Dockerfile.*
+/Dockerfile.*
 Makefile.*
