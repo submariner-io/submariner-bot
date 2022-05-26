@@ -2,6 +2,7 @@
 .dapper
 .project
 .settings
+.idea
 *.coverprofile
 /Dockerfile.*
 Makefile.*

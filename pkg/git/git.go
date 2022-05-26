@@ -162,9 +162,7 @@ func getHash(sha string) (plumbing.Hash, error) {
 		return plumbing.Hash{}, fmt.Errorf("Lengths don't match for sha hash %d != %d", len(hash), len(refHash))
 
 	} else {
-		for i, bt := range hash {
-			refHash[i] = bt
-		}
+		copy(refHash[:], hash)
 	}
 	return refHash, nil
 }
