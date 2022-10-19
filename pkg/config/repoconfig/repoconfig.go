@@ -22,7 +22,6 @@ type BotConfig struct {
 }
 
 func Read(gitRepo *git.Git, sha string) (*BotConfig, error) {
-
 	err := gitRepo.CheckoutHash(sha)
 	if err != nil {
 		return nil, err

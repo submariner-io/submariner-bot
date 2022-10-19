@@ -11,7 +11,6 @@ import (
 const WebhookSecretEnvVar = "WEBHOOK_SECRET"
 
 func GetWebhookSecret() (string, error) {
-
 	if secret := getWebhookSecretFromEnv(); secret != "" {
 		klog.Infof("Webhook secret retrieved from env var %s", WebhookSecretEnvVar)
 		return secret, nil
@@ -27,16 +26,13 @@ func GetWebhookSecret() (string, error) {
 }
 
 func getWebhookSecretFromEnv() string {
-
 	return os.Getenv(WebhookSecretEnvVar)
 }
 
 const webhookSecretEntry = "webhookSecret"
 
 func getWebhookSecretFromK8sSecret() (string, error) {
-
 	secret, err := getK8sSecret()
-
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +53,6 @@ func getWebhookSecretFromK8sSecret() (string, error) {
 }
 
 func createWebhookSecretInK8sSecret(secret *v1.Secret) (string, error) {
-
 	pwd, err := password.Generate(64, 10, 10, false, true)
 	if err != nil {
 		klog.Errorf("Something happened while trying to generate a webhook password: %s", err)

@@ -10,9 +10,7 @@ import (
 )
 
 func GetSSHKey() (ssh.Signer, error) {
-
 	bytes, err := getSSHKeyBytes()
-
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +19,6 @@ func GetSSHKey() (ssh.Signer, error) {
 }
 
 func getSSHKeyBytes() ([]byte, error) {
-
 	bytes, err := getSSHKeyFromEnv()
 	if err != nil {
 		return nil, err
@@ -52,9 +49,7 @@ func getSSHKeyFromEnv() ([]byte, error) {
 }
 
 func getSSHKeyFromK8sSecret() ([]byte, error) {
-
 	secret, err := getK8sSecret()
-
 	if err != nil {
 		return nil, err
 	}

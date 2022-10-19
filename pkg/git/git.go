@@ -23,8 +23,10 @@ import (
 
 const Origin = "origin"
 
-var projectsLock sync.Mutex
-var projects map[string]*Git = make(map[string]*Git)
+var (
+	projectsLock sync.Mutex
+	projects     map[string]*Git = make(map[string]*Git)
+)
 
 type Git struct {
 	repo *gogit.Repository
@@ -46,7 +48,6 @@ func New(name, url string) (*Git, error) {
 	}
 
 	signer, err := config.GetSSHKey()
-
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +161,6 @@ func getHash(sha string) (plumbing.Hash, error) {
 	var refHash plumbing.Hash
 	if len(hash) != len(refHash) {
 		return plumbing.Hash{}, fmt.Errorf("Lengths don't match for sha hash %d != %d", len(hash), len(refHash))
-
 	} else {
 		copy(refHash[:], hash)
 	}
@@ -173,7 +173,8 @@ func (gitRepo *Git) Push(branch string) error {
 		RemoteName: Origin,
 		Auth:       gitRepo.auth,
 		RefSpecs: []gogitConfig.RefSpec{
-			gogitConfig.RefSpec(fmt.Sprintf("+%s:%s", ref, ref))},
+			gogitConfig.RefSpec(fmt.Sprintf("+%s:%s", ref, ref)),
+		},
 	}
 	return gitRepo.repo.Push(&pushOptions)
 }
