@@ -13,11 +13,10 @@ import (
 	"github.com/submariner-io/pr-brancher-webhook/pkg/git"
 )
 
-//NOTE: this has been disabled in code for just in case we think it'd valuable to enable later
+// NOTE: this has been disabled in code for just in case we think it'd valuable to enable later
 const enableVersionBranches = false
 
 func Handle(pr github.PullRequestPayload) error {
-
 	logPullRequestInfo(&pr)
 	gh, err := ghclient.New(pr.Repository.Owner.Login, pr.Repository.Name)
 	if err != nil {
@@ -40,11 +39,11 @@ func Handle(pr github.PullRequestPayload) error {
 	case "synchronize":
 		return openOrSync(gitRepo, &pr, gh)
 	case "closed":
-		//TODO: if closed and pr.PullRequest.Merged == true, look for existing PR's pointing to the
+		// TODO: if closed and pr.PullRequest.Merged == true, look for existing PR's pointing to the
 		// merged version and change the base to "master" or pr.PullRequest.Base.Ref
 		return closeBranches(gitRepo, &pr, gh)
 	case "reopened":
-		//TODO: when re-opened it would be ideal to recover the previous branches, how?
+		// TODO: when re-opened it would be ideal to recover the previous branches, how?
 		return openOrSync(gitRepo, &pr, gh)
 	}
 
@@ -52,7 +51,6 @@ func Handle(pr github.PullRequestPayload) error {
 }
 
 func logPullRequestInfo(pr *github.PullRequestPayload) {
-
 	klog.Infof("PR %d %s: %s", pr.Number, pr.Action, pr.PullRequest.Title)
 	klog.Infof("  user: %s", pr.PullRequest.User.Login)
 	klog.Infof("   head      ssh: %s", pr.PullRequest.Head.Repo.SSHURL)

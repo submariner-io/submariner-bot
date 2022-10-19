@@ -9,7 +9,6 @@ import (
 )
 
 func GetGithubToken() (string, error) {
-
 	token := getGithubTokenFromEnv()
 	if token != "" {
 		return token, nil
@@ -29,9 +28,7 @@ func getGithubTokenFromEnv() string {
 }
 
 func getGithubTokenFromK8sSecret() (string, error) {
-
 	secret, err := getK8sSecret()
-
 	if err != nil {
 		return "", err
 	}

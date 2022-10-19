@@ -16,7 +16,6 @@ const (
 const listenAddr = ":3000"
 
 func main() {
-
 	webhookSecret, err := config.GetWebhookSecret()
 	if err != nil {
 		klog.Errorf("Error while trying to retrieve webhook secret: %s", err)

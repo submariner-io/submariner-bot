@@ -54,7 +54,6 @@ func (gh ghClient) AddLabel(issueOrPRNum int, label string) error {
 }
 
 func (gh ghClient) CommentOnPR(prNum int, comment string, args ...interface{}) {
-
 	// In GitHub PRs are a sort of issue, so some operations need to be done on the Issues API
 	comment = "🤖 " + fmt.Sprintf(comment, args...)
 	prComment := github.IssueComment{Body: &comment}
@@ -64,7 +63,6 @@ func (gh ghClient) CommentOnPR(prNum int, comment string, args ...interface{}) {
 		gh.repo,
 		prNum,
 		&prComment)
-
 	// We don't propagate and just log the error
 	if err != nil {
 		klog.Errorf("Error commenting on pr %d: %s, response: %v", prNum, err, resp)
@@ -87,7 +85,6 @@ func (gh ghClient) fetchPRsWithBase(baseBranch string) ([]*github.PullRequest, e
 	list, _, err := gh.client.PullRequests.List(context.Background(), gh.owner, gh.repo, &github.PullRequestListOptions{
 		Base: baseBranch,
 	})
-
 	if err != nil {
 		klog.Errorf("An error happened while trying to find PRs dependent on branch: %s on repo %s/%s", baseBranch,
 			gh.owner, gh.repo)
@@ -113,7 +110,6 @@ func (gh ghClient) UpdateDependingPRs(prNum int, baseRef string, branchesToDelet
 			dependentPr.Base.Ref = &baseRef
 			_, _, err := gh.client.PullRequests.Edit(context.Background(), gh.owner, gh.repo,
 				*dependentPr.Number, dependentPr)
-
 			if err != nil {
 				klog.Errorf("updating dependent PR: %s : %s", *dependentPr.HTMLURL, err)
 				gh.CommentOnPR(prNum, "Error updating dependent PRs: %s : %s", *dependentPr.HTMLURL, err)
