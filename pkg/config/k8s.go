@@ -2,7 +2,7 @@ package config
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 
 	v1meta "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,7 +60,7 @@ func updateK8sSecret(secret *v1meta.Secret) error {
 }
 
 func getMyNamespace() (string, error) {
-	bytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	bytes, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	if err != nil {
 		return "", err
 	}

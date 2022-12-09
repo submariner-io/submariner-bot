@@ -5,7 +5,6 @@ package git
 import (
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"sync"
@@ -219,5 +218,5 @@ func (g *Git) CheckoutHash(hash string) error {
 
 func (g *Git) ReadFile(file string) ([]byte, error) {
 	filename := path.Join(dirName(g.name), file)
-	return ioutil.ReadFile(filename)
+	return os.ReadFile(filename)
 }
