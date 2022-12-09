@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/go-playground/webhooks/github"
+	"github.com/go-playground/webhooks/v6/github"
 	"k8s.io/klog"
 
 	"github.com/submariner-io/pr-brancher-webhook/pkg/config"
