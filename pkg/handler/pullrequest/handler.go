@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-playground/webhooks/github"
-	"github.com/submariner-io/pr-brancher-webhook/pkg/config/repoconfig"
+	"github.com/go-playground/webhooks/v6/github"
 	"k8s.io/klog"
 
+	"github.com/submariner-io/pr-brancher-webhook/pkg/config/repoconfig"
 	"github.com/submariner-io/pr-brancher-webhook/pkg/ghclient"
 	"github.com/submariner-io/pr-brancher-webhook/pkg/git"
 )

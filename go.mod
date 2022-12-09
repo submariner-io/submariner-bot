@@ -3,7 +3,7 @@ module github.com/submariner-io/pr-brancher-webhook
 go 1.18
 
 require (
-	github.com/go-playground/webhooks v5.17.0+incompatible
+	github.com/go-playground/webhooks/v6 v6.0.1
 	github.com/google/go-github/v28 v28.1.1
 	github.com/sethvargo/go-password v0.2.0
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd

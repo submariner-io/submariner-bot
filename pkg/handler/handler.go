@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/go-playground/webhooks/github"
+	"github.com/go-playground/webhooks/v6/github"
 
 	"github.com/submariner-io/pr-brancher-webhook/pkg/handler/pullrequest"
 )
