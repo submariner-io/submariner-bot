@@ -1,4 +1,4 @@
-module github.com/submariner-io/pr-brancher-webhook
+module github.com/submariner-io/submariner-bot
 
 go 1.18
 

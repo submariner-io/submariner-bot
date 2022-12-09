@@ -6,8 +6,8 @@ import (
 	"github.com/go-playground/webhooks/v6/github"
 	"k8s.io/klog"
 
-	"github.com/submariner-io/pr-brancher-webhook/pkg/config"
-	"github.com/submariner-io/pr-brancher-webhook/pkg/handler"
+	"github.com/submariner-io/submariner-bot/pkg/config"
+	"github.com/submariner-io/submariner-bot/pkg/handler"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 	"golang.org/x/oauth2"
 	"k8s.io/klog"
 
-	"github.com/submariner-io/pr-brancher-webhook/pkg/config"
+	"github.com/submariner-io/submariner-bot/pkg/config"
 )
 
 type GH interface {

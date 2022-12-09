@@ -3,7 +3,7 @@ package repoconfig
 import (
 	"fmt"
 
-	"github.com/submariner-io/pr-brancher-webhook/pkg/git"
+	"github.com/submariner-io/submariner-bot/pkg/git"
 	"gopkg.in/yaml.v2"
 	"k8s.io/klog"
 )
