@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"golang.org/x/crypto/ssh"
@@ -44,7 +43,7 @@ func getSSHKeyFromEnv() ([]byte, error) {
 		return nil, nil
 	}
 
-	bytes, err := ioutil.ReadFile(pkPath)
+	bytes, err := os.ReadFile(pkPath)
 	return bytes, err
 }
 
