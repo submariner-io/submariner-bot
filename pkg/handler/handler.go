@@ -3,7 +3,7 @@ package handler
 import (
 	"github.com/go-playground/webhooks/v6/github"
 
-	"github.com/submariner-io/pr-brancher-webhook/pkg/handler/pullrequest"
+	"github.com/submariner-io/submariner-bot/pkg/handler/pullrequest"
 )
 
 func EventsToHandle() []github.Event {

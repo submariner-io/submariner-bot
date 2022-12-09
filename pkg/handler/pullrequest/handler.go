@@ -8,9 +8,9 @@ import (
 	"github.com/go-playground/webhooks/v6/github"
 	"k8s.io/klog"
 
-	"github.com/submariner-io/pr-brancher-webhook/pkg/config/repoconfig"
-	"github.com/submariner-io/pr-brancher-webhook/pkg/ghclient"
-	"github.com/submariner-io/pr-brancher-webhook/pkg/git"
+	"github.com/submariner-io/submariner-bot/pkg/config/repoconfig"
+	"github.com/submariner-io/submariner-bot/pkg/ghclient"
+	"github.com/submariner-io/submariner-bot/pkg/git"
 )
 
 // NOTE: this has been disabled in code for just in case we think it'd valuable to enable later
