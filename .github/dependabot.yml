@@ -4,5 +4,9 @@ updates:
   - package-ecosystem: gomod
     directory: "/"
     schedule:
-      interval: daily
+      interval: monthly
+    ignore:
+      # These are included by k8s.io/client-go
+      - dependency-name: k8s.io/api
+      - dependency-name: k8s.io/apimachinery
     open-pull-requests-limit: 10
