@@ -7,7 +7,7 @@ require (
 	github.com/google/go-github/v28 v28.1.1
 	github.com/sethvargo/go-password v0.2.0
 	golang.org/x/crypto v0.8.0
-	golang.org/x/oauth2 v0.6.0
+	golang.org/x/oauth2 v0.7.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.27.1
