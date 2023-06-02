@@ -3,7 +3,7 @@ module github.com/submariner-io/submariner-bot
 go 1.18
 
 require (
-	github.com/go-playground/webhooks/v6 v6.0.1
+	github.com/go-playground/webhooks/v6 v6.1.0
 	github.com/google/go-github/v28 v28.1.1
 	github.com/sethvargo/go-password v0.2.0
 	golang.org/x/crypto v0.9.0
