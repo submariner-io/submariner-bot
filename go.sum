@@ -33,8 +33,8 @@ github.com/go-openapi/jsonreference v0.20.1 h1:FBLnyygC4/IZZr893oiomc9XaghoveYTr
 github.com/go-openapi/jsonreference v0.20.1/go.mod h1:Bl1zwGIM8/wsvqjsOQLJ/SH+En5Ap4rVB5KVcIDZG2k=
 github.com/go-openapi/swag v0.22.3 h1:yMBqmnQ0gyZvEb/+KzuWZOXgllrXT4SADYbvDaXHv/g=
 github.com/go-openapi/swag v0.22.3/go.mod h1:UzaqsxGiab7freDnrUUra0MwWfN/q7tE4j+VcZ0yl14=
-github.com/go-playground/webhooks/v6 v6.0.1 h1:ssqgU7vZ+xK+/Uwx4zkf5tfmzOHnLBpzSp5bJ4cX3rg=
-github.com/go-playground/webhooks/v6 v6.0.1/go.mod h1:GCocmfMtpJdkEOM1uG9p2nXzg1kY5X/LtvQgtPHUaaA=
+github.com/go-playground/webhooks/v6 v6.1.0 h1:mREMwgiLzDPw7CuguJkt+ImuBc/P5tPJTqSQYLB3Hjg=
+github.com/go-playground/webhooks/v6 v6.1.0/go.mod h1:GCocmfMtpJdkEOM1uG9p2nXzg1kY5X/LtvQgtPHUaaA=
 github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 h1:p104kn46Q8WdvHunIJ9dAyjPVtrBPhSr3KT2yUst43I=
 github.com/gogits/go-gogs-client v0.0.0-20200905025246-8bb8a50cb355/go.mod h1:cY2AIrMgHm6oOHmR7jY+9TtjzSjQ3iG7tURJG3Y6XH0=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
