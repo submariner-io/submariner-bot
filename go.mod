@@ -1,6 +1,6 @@
 module github.com/submariner-io/submariner-bot
 
-go 1.20
+go 1.21
 
 require (
 	github.com/go-playground/webhooks/v6 v6.3.0
