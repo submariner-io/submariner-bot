@@ -7,7 +7,7 @@ require (
 	github.com/go-playground/webhooks/v6 v6.3.0
 	github.com/google/go-github/v28 v28.1.1
 	github.com/sethvargo/go-password v0.2.0
-	golang.org/x/crypto v0.19.0
+	golang.org/x/crypto v0.20.0
 	golang.org/x/oauth2 v0.17.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.29.2
