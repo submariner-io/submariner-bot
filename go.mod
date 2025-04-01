@@ -2,12 +2,14 @@ module github.com/submariner-io/submariner-bot
 
 go 1.23.0
 
+toolchain go1.24.1
+
 require (
 	github.com/go-git/go-git/v5 v5.14.0
 	github.com/go-playground/webhooks/v6 v6.4.0
 	github.com/google/go-github/v28 v28.1.1
 	github.com/sethvargo/go-password v0.3.1
-	golang.org/x/crypto v0.35.0
+	golang.org/x/crypto v0.36.0
 	golang.org/x/oauth2 v0.27.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.32.2
@@ -55,9 +57,9 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/term v0.29.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
