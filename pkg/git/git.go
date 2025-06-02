@@ -150,7 +150,7 @@ func (gitRepo *Git) CreateBranch(branch, sha string) error {
 	hr := plumbing.NewHashReference(ref, refHash)
 	err = gitRepo.repo.Storer.SetReference(hr)
 	if err != nil {
-		return fmt.Errorf("Error creating reference for %s", ref)
+		return fmt.Errorf("error creating reference for %s", ref)
 	}
 	return err
 }
@@ -159,7 +159,7 @@ func getHash(sha string) (plumbing.Hash, error) {
 	hash, _ := hex.DecodeString(sha)
 	var refHash plumbing.Hash
 	if len(hash) != len(refHash) {
-		return plumbing.Hash{}, fmt.Errorf("Lengths don't match for sha hash %d != %d", len(hash), len(refHash))
+		return plumbing.Hash{}, fmt.Errorf("lengths don't match for sha hash %d != %d", len(hash), len(refHash))
 	} else {
 		copy(refHash[:], hash)
 	}
