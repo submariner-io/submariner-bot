@@ -10,9 +10,9 @@ require (
 	golang.org/x/crypto v0.37.0
 	golang.org/x/oauth2 v0.29.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.33.0
-	k8s.io/apimachinery v0.33.0
-	k8s.io/client-go v0.33.0
+	k8s.io/api v0.33.2
+	k8s.io/apimachinery v0.33.2
+	k8s.io/client-go v0.33.2
 	k8s.io/klog v1.0.0
 )
 
