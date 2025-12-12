@@ -1,0 +1,41 @@
+---
+name: CodeRabbit
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        required: true
+        type: number
+
+jobs:
+  trigger-coderabbit:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]' || github.actor == 'submariner-bot'
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = ${{ inputs.pr_number }};
+
+            const triggerComment = '@coderabbitai review';
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number, per_page: 100 }
+            );
+            const commentExists = comments.some(c => (c.body ?? '').includes(triggerComment));
+
+            if (!commentExists) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body: triggerComment
+              });
+              console.log('CodeRabbit review comment posted.');
+            } else {
+              console.log('CodeRabbit review comment already exists, skipping.');
+            }
