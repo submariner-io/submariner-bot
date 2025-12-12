@@ -1,0 +1,12 @@
+---
+name: Test CodeRabbit
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    uses: submariner-io/submariner-bot/.github/workflows/coderabbit-trigger.yml@72dcd864579e05fc0ef7370445114de6da42195c
+    with:
+      pr_number: 230
+    secrets: inherit
