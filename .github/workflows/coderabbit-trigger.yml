@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]' || github.actor == 'submariner-bot'
     permissions:
+      contents: write
       pull-requests: write
     steps:
       - uses: actions/github-script@v8
@@ -29,3 +30,31 @@ jobs:
               body: triggerComment
             });
             console.log('CodeRabbit review comment posted.');
+
+            // Enable auto-merge
+            const pr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: issue_number
+            });
+
+            try {
+              await github.graphql(`
+                mutation($pullRequestId: ID!) {
+                  enablePullRequestAutoMerge(input: {
+                    pullRequestId: $pullRequestId,
+                    mergeMethod: REBASE
+                  }) {
+                    pullRequest {
+                      id
+                    }
+                  }
+                }
+              `, {
+                pullRequestId: pr.data.node_id
+              });
+              console.log('Auto-merge enabled with rebase method.');
+            } catch (error) {
+              console.error('Failed to enable auto-merge:', error.message);
+              throw error;
+            }
