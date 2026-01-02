@@ -58,3 +58,16 @@ jobs:
               console.error('Failed to enable auto-merge:', error.message);
               throw error;
             }
+
+            // Add ready-to-test label
+            try {
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number,
+                labels: ['ready-to-test']
+              });
+              console.log('Added ready-to-test label.');
+            } catch (error) {
+              console.log('Could not add ready-to-test label (label may not exist):', error.message);
+            }
