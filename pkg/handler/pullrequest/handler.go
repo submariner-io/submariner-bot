@@ -61,6 +61,13 @@ func logPullRequestInfo(pr *github.PullRequestPayload) {
 	klog.Infof("            name: %s", pr.PullRequest.Base.Ref)
 }
 
+func isDependabotPR(pr *github.PullRequestPayload) bool {
+	// Check if the PR author is dependabot
+	// GitHub's Dependabot can appear as either "dependabot[bot]" or "dependabot-preview[bot]"
+	login := pr.PullRequest.User.Login
+	return login == "dependabot[bot]" || login == "dependabot-preview[bot]" || login == "dependabot"
+}
+
 func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH) error {
 	prNum := int(pr.Number)
 
@@ -71,9 +78,19 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH)
 
 	readyToReviewMsg := ""
 	if config != nil && config.LabelApproved != nil {
-		readyToReviewMsg += fmt.Sprintf("\n🚀 Full E2E won't run until the %q label is applied. "+
-			"I will add it automatically once the PR has %d approvals, or you can add it manually.",
-			*config.LabelApproved.Label, *config.LabelApproved.Approvals)
+		// Add ready-to-test label for Dependabot PRs when opened
+		if pr.Action == "opened" && isDependabotPR(pr) {
+			label := *config.LabelApproved.Label
+			klog.Infof("Adding label %s to Dependabot PR #%d", label, prNum)
+			err = gh.AddLabel(prNum, label)
+			if err != nil {
+				klog.Errorf("Error while adding label %s to Dependabot PR #%d: %s", label, prNum, err)
+			}
+		} else {
+			readyToReviewMsg += fmt.Sprintf("\n🚀 Full E2E won't run until the %q label is applied. "+
+				"I will add it automatically once the PR has %d approvals, or you can add it manually.",
+				*config.LabelApproved.Label, *config.LabelApproved.Approvals)
+		}
 	}
 
 	// If the pull request is coming from a local branch
