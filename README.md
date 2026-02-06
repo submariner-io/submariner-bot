@@ -70,8 +70,20 @@ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/relea
 kubectl apply -f deployment/letsencrypt-prod-issuer.yaml # you may need to edit the class in the yaml based on your ingress
 ```
 
-## update image
+## Deployment
+
+The submariner-bot is deployed on an OpenShift cluster using BuildConfig for automated builds from GitHub.
+
+### Triggering a Rebuild
+
+Builds are automatically triggered via GitHub webhook when changes are pushed to the repository.
+
+To manually trigger a rebuild (requires appropriate permissions):
 
 ```bash
-kubectl rollout restart deployment/pr-brancher
+oc start-build submariner-bot-git -n submariner-bot --follow
 ```
+
+### Updating the Deployment
+
+After a new image is built, the deployment will automatically pick up the new image due to `imagePullPolicy: Always`.
