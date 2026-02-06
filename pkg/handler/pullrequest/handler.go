@@ -68,6 +68,12 @@ func isDependabotPR(pr *github.PullRequestPayload) bool {
 	return login == "dependabot[bot]" || login == "dependabot-preview[bot]" || login == "dependabot"
 }
 
+func isKonfluxBotPR(pr *github.PullRequestPayload) bool {
+	// Check if the PR author is Red Hat Konflux bot
+	login := pr.PullRequest.User.Login
+	return login == "red-hat-konflux-kflux-prd-rh02[bot]" || login == "red-hat-konflux-kflux-prd-rh02"
+}
+
 func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH) error {
 	prNum := int(pr.Number)
 
@@ -78,13 +84,13 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH)
 
 	readyToReviewMsg := ""
 	if config != nil && config.LabelApproved != nil {
-		// Add ready-to-test label for Dependabot PRs when opened
-		if pr.Action == "opened" && isDependabotPR(pr) {
+		// Add ready-to-test label for Dependabot and Konflux bot PRs when opened
+		if pr.Action == "opened" && (isDependabotPR(pr) || isKonfluxBotPR(pr)) {
 			label := *config.LabelApproved.Label
-			klog.Infof("Adding label %s to Dependabot PR #%d", label, prNum)
+			klog.Infof("Adding label %s to PR #%d from %s", label, prNum, pr.PullRequest.User.Login)
 			err = gh.AddLabel(prNum, label)
 			if err != nil {
-				klog.Errorf("Error while adding label %s to Dependabot PR #%d: %s", label, prNum, err)
+				klog.Errorf("Error while adding label %s to PR #%d from %s: %s", label, prNum, pr.PullRequest.User.Login, err)
 			}
 		} else {
 			readyToReviewMsg += fmt.Sprintf("\n🚀 Full E2E won't run until the %q label is applied. "+

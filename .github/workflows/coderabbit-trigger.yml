@@ -10,7 +10,7 @@ on:
 jobs:
   trigger-coderabbit:
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]' || github.actor == 'submariner-bot'
+    if: github.actor == 'dependabot[bot]' || github.actor == 'submariner-bot' || github.actor == 'red-hat-konflux-kflux-prd-rh02[bot]'
     permissions:
       contents: write
       pull-requests: write
