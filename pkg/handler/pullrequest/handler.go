@@ -74,6 +74,17 @@ func isKonfluxBotPR(pr *github.PullRequestPayload) bool {
 	return login == "red-hat-konflux-kflux-prd-rh02[bot]" || login == "red-hat-konflux-kflux-prd-rh02"
 }
 
+func isSubmarinerBotPR(pr *github.PullRequestPayload) bool {
+	// Check if the PR author is submariner-bot
+	login := pr.PullRequest.User.Login
+	return login == "submariner-bot" || login == "submariner-bot[bot]"
+}
+
+func isBotPR(pr *github.PullRequestPayload) bool {
+	// Check if the PR is from a bot that should have auto-merge enabled
+	return isDependabotPR(pr) || isKonfluxBotPR(pr) || isSubmarinerBotPR(pr)
+}
+
 func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH) error {
 	prNum := int(pr.Number)
 
@@ -96,6 +107,19 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH)
 			readyToReviewMsg += fmt.Sprintf("\n🚀 Full E2E won't run until the %q label is applied. "+
 				"I will add it automatically once the PR has %d approvals, or you can add it manually.",
 				*config.LabelApproved.Label, *config.LabelApproved.Approvals)
+		}
+	}
+
+	if pr.Action == "opened" && isBotPR(pr) {
+		klog.Infof("Enabling auto-merge and approving PR #%d from %s", prNum, pr.PullRequest.User.Login)
+		err = gh.EnableAutoMerge(prNum)
+		if err != nil {
+			klog.Errorf("Error while enabling auto-merge for PR #%d from %s: %s", prNum, pr.PullRequest.User.Login, err)
+		}
+
+		err = gh.ApprovePR(prNum)
+		if err != nil {
+			klog.Errorf("Error while approving PR #%d from %s: %s", prNum, pr.PullRequest.User.Login, err)
 		}
 	}
 

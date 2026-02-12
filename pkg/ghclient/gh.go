@@ -1,8 +1,12 @@
 package ghclient
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/google/go-github/v28/github"
 	"golang.org/x/oauth2"
@@ -13,7 +17,9 @@ import (
 
 type GH interface {
 	AddLabel(issueOrPRNum int, label string) error
+	ApprovePR(prNum int) error
 	CommentOnPR(prNum int, comment string, args ...interface{})
+	EnableAutoMerge(prNum int) error
 	ListReviews(prNum int) ([]*github.PullRequestReview, error)
 	UpdateDependingPRs(prNum int, baseRef string, branchesToDelete []string) error
 }
@@ -30,17 +36,19 @@ func New(owner, repo string) (GH, error) {
 	tc := oauth2.NewClient(ctx, ts)
 
 	gh := ghClient{
-		client: github.NewClient(tc),
-		owner:  owner,
-		repo:   repo,
+		client:     github.NewClient(tc),
+		httpClient: tc,
+		owner:      owner,
+		repo:       repo,
 	}
 	return &gh, nil
 }
 
 type ghClient struct {
-	client *github.Client
-	owner  string
-	repo   string
+	client     *github.Client
+	httpClient *http.Client
+	owner      string
+	repo       string
 }
 
 func (gh ghClient) AddLabel(issueOrPRNum int, label string) error {
@@ -50,6 +58,22 @@ func (gh ghClient) AddLabel(issueOrPRNum int, label string) error {
 		gh.repo,
 		issueOrPRNum,
 		[]string{label})
+	return err
+}
+
+func (gh ghClient) ApprovePR(prNum int) error {
+	event := "APPROVE"
+	body := "Automatically approved"
+	review := github.PullRequestReviewRequest{
+		Event: &event,
+		Body:  &body,
+	}
+	_, _, err := gh.client.PullRequests.CreateReview(
+		context.Background(),
+		gh.owner,
+		gh.repo,
+		prNum,
+		&review)
 	return err
 }
 
@@ -67,6 +91,81 @@ func (gh ghClient) CommentOnPR(prNum int, comment string, args ...interface{}) {
 	if err != nil {
 		klog.Errorf("Error commenting on pr %d: %s, response: %v", prNum, err, resp)
 	}
+}
+
+func (gh ghClient) EnableAutoMerge(prNum int) error {
+	// Get the PR to obtain its node_id for GraphQL
+	pr, _, err := gh.client.PullRequests.Get(
+		context.Background(),
+		gh.owner,
+		gh.repo,
+		prNum)
+	if err != nil {
+		return err
+	}
+
+	// Use GraphQL to enable auto-merge with REBASE method
+	mutation := `
+		mutation($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
+			enablePullRequestAutoMerge(input: {
+				pullRequestId: $pullRequestId,
+				mergeMethod: $mergeMethod
+			}) {
+				pullRequest {
+					id
+				}
+			}
+		}
+	`
+
+	variables := map[string]interface{}{
+		"pullRequestId": pr.GetNodeID(),
+		"mergeMethod":   "REBASE",
+	}
+
+	requestBody := map[string]interface{}{
+		"query":     mutation,
+		"variables": variables,
+	}
+
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", "https://api.github.com/graphql", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := gh.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close() //nolint:errcheck // Ignore error from close
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("GraphQL request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Check for GraphQL errors
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return err
+	}
+
+	if errors, ok := result["errors"]; ok {
+		return fmt.Errorf("GraphQL errors: %v", errors)
+	}
+
+	return nil
 }
 
 func (gh ghClient) ListReviews(prNum int) ([]*github.PullRequestReview, error) {
