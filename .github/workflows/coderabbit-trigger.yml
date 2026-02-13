@@ -22,11 +22,25 @@ jobs:
             const repo = context.repo.repo;
             const issue_number = ${{ inputs.pr_number }};
 
-            const triggerComment = '@coderabbitai review';
-            await github.rest.issues.createComment({
+            // Fetch PR details to check the base branch
+            const { data: pr } = await github.rest.pulls.get({
               owner,
               repo,
-              issue_number,
-              body: triggerComment
+              pull_number: issue_number
             });
-            console.log('CodeRabbit review comment posted.');
+
+            console.log(`PR #${issue_number} base branch: ${pr.base.ref}`);
+
+            // Only add comment if the PR is targeting the devel branch
+            if (pr.base.ref === 'devel') {
+              const triggerComment = '@coderabbitai review';
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body: triggerComment
+              });
+              console.log('CodeRabbit review comment posted.');
+            } else {
+              console.log(`Skipping CodeRabbit comment - PR is targeting ${pr.base.ref}, not devel`);
+            }
