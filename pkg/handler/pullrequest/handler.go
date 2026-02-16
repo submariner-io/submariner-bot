@@ -85,6 +85,38 @@ func isBotPR(pr *github.PullRequestPayload) bool {
 	return isDependabotPR(pr) || isKonfluxBotPR(pr) || isSubmarinerBotPR(pr)
 }
 
+func isGitHubActionsUpdatePR(pr *github.PullRequestPayload, gh ghclient.GH) bool {
+	// Check if this is a PR targeting the devel branch
+	if pr.PullRequest.Base.Ref != "devel" {
+		return false
+	}
+
+	// Get the list of files changed in the PR
+	files, err := gh.ListFiles(int(pr.Number))
+	if err != nil {
+		klog.Errorf("Error listing files for PR #%d: %s", pr.Number, err)
+		return false
+	}
+
+	// Check if all changed files are GitHub Actions workflow files
+	if len(files) == 0 {
+		return false
+	}
+
+	for _, file := range files {
+		// Check if the file is in .github/workflows/ directory
+		if !strings.HasPrefix(file.GetFilename(), ".github/workflows/") {
+			return false
+		}
+		// Check if it's a YAML file
+		if !strings.HasSuffix(file.GetFilename(), ".yml") && !strings.HasSuffix(file.GetFilename(), ".yaml") {
+			return false
+		}
+	}
+
+	return true
+}
+
 func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH) error {
 	prNum := int(pr.Number)
 
@@ -108,6 +140,11 @@ func openOrSync(gitRepo *git.Git, pr *github.PullRequestPayload, gh ghclient.GH)
 				"I will add it automatically once the PR has %d approvals, or you can add it manually.",
 				*config.LabelApproved.Label, *config.LabelApproved.Approvals)
 		}
+	}
+
+	if pr.Action == "opened" && (isSubmarinerBotPR(pr) || (isDependabotPR(pr) && isGitHubActionsUpdatePR(pr, gh))) {
+		klog.Infof("Triggering CodeRabbit review for PR #%d from %s", prNum, pr.PullRequest.User.Login)
+		gh.CommentOnPR(prNum, "@coderabbitai review")
 	}
 
 	if pr.Action == "opened" && isBotPR(pr) {
