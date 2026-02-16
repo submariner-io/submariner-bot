@@ -20,6 +20,7 @@ type GH interface {
 	ApprovePR(prNum int) error
 	CommentOnPR(prNum int, comment string, args ...interface{})
 	EnableAutoMerge(prNum int) error
+	ListFiles(prNum int) ([]*github.CommitFile, error)
 	ListReviews(prNum int) ([]*github.PullRequestReview, error)
 	UpdateDependingPRs(prNum int, baseRef string, branchesToDelete []string) error
 }
@@ -166,6 +167,17 @@ func (gh ghClient) EnableAutoMerge(prNum int) error {
 	}
 
 	return nil
+}
+
+func (gh ghClient) ListFiles(prNum int) ([]*github.CommitFile, error) {
+	files, _, err := gh.client.PullRequests.ListFiles(
+		context.Background(),
+		gh.owner,
+		gh.repo,
+		prNum,
+		&github.ListOptions{PerPage: 100})
+
+	return files, err
 }
 
 func (gh ghClient) ListReviews(prNum int) ([]*github.PullRequestReview, error) {
