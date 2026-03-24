@@ -4,10 +4,10 @@
 
 submariner-bot listens for webhook events on port 3000 over http. Those events
 are in the github webhook event format
-described [here](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads)
+described in the [GitHub webhook events documentation](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads)
 
 We use a [library](https://github.com/go-playground/webhooks/tree/master/github) that provides a good interface to handle those events
-which are handled [here](https://github.com/submariner-io/submariner-bot/blob/devel/pkg/handler/handler.go):
+which are handled in the [handler.go file](https://github.com/submariner-io/submariner-bot/blob/devel/pkg/handler/handler.go):
 
 ## Developing and testing locally
 
